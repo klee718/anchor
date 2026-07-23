@@ -15,6 +15,7 @@ import { initializeApp, cert, getApps, type App } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import type { Request, Response, NextFunction } from "express";
+import crypto from "crypto";
 
 let app: App | null = null;
 
@@ -51,17 +52,32 @@ export interface AuthedRequest extends Request {
   uid?: string;
 }
 
+const SECRET = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "anchor-secret-key-123456";
+
+export function signToken(payload: { email: string }): string {
+  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = crypto.createHmac("sha256", SECRET).update(data).digest("base64url");
+  return `${data}.${signature}`;
+}
+
+export function verifyToken(token: string): { email: string } | null {
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [data, signature] = parts;
+  const expectedSignature = crypto.createHmac("sha256", SECRET).update(data).digest("base64url");
+  if (signature !== expectedSignature) return null;
+  try {
+    return JSON.parse(Buffer.from(data, "base64url").toString());
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Verifies the Firebase ID token in the Authorization header (Bearer <token>)
- * and attaches req.uid. Returns 401 if missing/invalid, 503 if Firebase
- * Admin itself isn't configured (a deployment problem, not a client one).
+ * Verifies our custom local session token (HMAC-SHA256 signed JWT) in the Authorization header.
+ * Attaches payload.email as req.uid. Returns 401 if missing or invalid.
  */
 export async function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
-  if (!isFirebaseAdminConfigured) {
-    res.status(503).json({ error: "auth_not_configured", message: "Server auth is not set up yet." });
-    return;
-  }
-
   const header = req.headers.authorization ?? "";
   const match = /^Bearer (.+)$/.exec(header);
   if (!match) {
@@ -69,12 +85,12 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
     return;
   }
 
-  try {
-    const decoded = await getAdminAuth(getAdminApp()).verifyIdToken(match[1]);
-    req.uid = decoded.uid;
-    next();
-  } catch (error) {
-    console.error("Token verification failed:", error);
+  const payload = verifyToken(match[1]);
+  if (!payload) {
     res.status(401).json({ error: "invalid_token" });
+    return;
   }
+
+  req.uid = payload.email; // use email as the uid
+  next();
 }

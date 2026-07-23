@@ -9,7 +9,7 @@ import { GoogleGenAI } from "@google/genai";
 import { type Translation, lookupReference } from "./verses";
 import { runChatTurn, generateLessonOpeningQuestion, isRateLimited, RATE_LIMIT_MESSAGE, type ChatMessage } from "./chat";
 import { createDryRunAI } from "./dev-mock";
-import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest, getAdminAuthInstance } from "./firebase-admin";
+import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest, getAdminAuthInstance, signToken } from "./firebase-admin";
 import { getOrCreateProfile, completeLesson, checkAndIncrementFreeChat, setPremiumStatus, findUidByStripeCustomerId } from "./progress-store";
 import { createCheckoutSession, constructWebhookEvent, interpretWebhookEvent, isStripeConfigured } from "./stripe-admin";
 import { dryRunGetOrCreateProfile, dryRunCompleteLesson, dryRunCheckAndIncrementFreeChat } from "./dry-run-store";
@@ -164,34 +164,10 @@ app.post("/api/custom-login", async (req, res) => {
     return;
   }
 
-  // If in dry-run mode, we can just generate a fake/stub response or bypass real custom token generation
-  // if Firebase is not fully configured, otherwise proceed with standard custom token generation.
-  if (isDryRun() && !isFirebaseAdminConfigured) {
-    res.json({ ok: true, token: "dry-run-custom-token" });
-    return;
-  }
-
   try {
-    const adminAuth = getAdminAuthInstance();
-    let uid: string;
-
-    try {
-      // 2. See if a Firebase user already exists for this email
-      const userRecord = await adminAuth.getUserByEmail(trimmedEmail);
-      uid = userRecord.uid;
-    } catch (err: any) {
-      // If user does not exist (auth/user-not-found), create them on the fly
-      if (err.code === "auth/user-not-found") {
-        const newUserRecord = await adminAuth.createUser({ email: trimmedEmail });
-        uid = newUserRecord.uid;
-      } else {
-        throw err;
-      }
-    }
-
-    // 3. Generate a custom token
-    const customToken = await adminAuth.createCustomToken(uid);
-    res.json({ ok: true, token: customToken });
+    // Generate our own local session token, completely bypassing Firebase Auth lookup
+    const token = signToken({ email: trimmedEmail });
+    res.json({ ok: true, token });
   } catch (error: any) {
     console.error("Custom login failed:", error);
     res.status(500).json({ ok: false, error: error?.message || "Failed to authenticate." });

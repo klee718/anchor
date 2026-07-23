@@ -92,7 +92,7 @@ var SYSTEM_PROMPT = `You are Anchor, a companion for honest conversation about s
 
 Your core stance: treat doubt as legitimate, not as a problem to be resolved. Where scholars or translators genuinely disagree, say so. When you make a claim, be willing to name the strongest counter-argument to your own point. Do not perform resolved confidence you don't have. Never end a turn with a scripted "have faith" close \u2014 end most turns by asking the user a genuine question back, one that invites them to keep talking rather than wrapping things up.
 
-Grounding rule (never break this): you must never quote or cite Bible verse text from memory. Before stating what any verse says, call the lookup_verse tool. If the tool reports the verse was not found (wrong reference, unavailable translation, or any other lookup failure), say plainly that you can't verify that citation right now \u2014 do not proceed to state text anyway, and do not guess.
+Grounding rule (never break this): you must never quote or cite Bible verse text from memory. Before stating what any verse says, call the lookup_verse tool. When you call the lookup_verse tool, you must quote the returned verse text verbatim in your response. If the tool reports the verse was not found (wrong reference, unavailable translation, or any other lookup failure), say plainly that you can't verify that citation right now \u2014 do not proceed to state text anyway, and do not guess.
 
 Crisis rule (never break this): if anything in the conversation suggests the user may be in real emotional distress \u2014 self-harm, suicidal thoughts, abuse, or a genuine crisis, not just intellectual doubt or frustration \u2014 stop the normal theological conversation. Gently and clearly point them to real human help: in the US, the 988 Suicide & Crisis Lifeline (call or text 988), or the Crisis Text Line (text HOME to 741741). Do not diagnose, do not minimize what they said, and do not try to be a substitute for a real person. This applies even if the message also contains a scripture question \u2014 safety comes first.
 
@@ -141,7 +141,26 @@ function toHistoryContents(history, newMessage) {
   return contents;
 }
 function normalizeForCompare(text) {
-  return text.replace(/\s+/g, " ").trim().toLowerCase();
+  return text.replace(/[^\p{L}\p{N}\s]/gu, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+async function generateContentWithRetry(ai, options, maxRetries = 3, delayMs = 1500) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await ai.models.generateContent(options);
+    } catch (err) {
+      lastError = err;
+      const status = err?.status || err?.statusCode || (err?.message?.includes("503") ? 503 : null);
+      const isTransient = status === 503 || status === 429 || err?.message?.includes("UNAVAILABLE") || err?.message?.includes("high demand");
+      if (isTransient && attempt < maxRetries) {
+        console.warn(`Gemini API call failed (attempt ${attempt}/${maxRetries}). Retrying in ${delayMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError;
 }
 async function runChatTurn(ai, history, message) {
   if (isCrisisAdjacent(message)) {
@@ -153,8 +172,8 @@ async function runChatTurn(ai, history, message) {
   try {
     let lastVerseLookup = null;
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+      const response = await generateContentWithRetry(ai, {
+        model: "gemini-flash-latest",
         contents,
         config: {
           systemInstruction: SYSTEM_PROMPT,
@@ -264,8 +283,8 @@ Example format:
 "Reach here your finger, and see my hands at home..." (John 20:27, WEB)
 
 Thomas is often called "Doubting Thomas" as a label of shame, but Jesus actually met his request for physical evidence. Do you see this passage as encouraging honest inquiry, or is it ultimately a warning against doubting? How do you react to Thomas's story?`;
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+  const response = await generateContentWithRetry(ai, {
+    model: "gemini-flash-latest",
     contents: prompt,
     config: {
       systemInstruction: SYSTEM_PROMPT
@@ -326,6 +345,7 @@ var import_dotenv = __toESM(require("dotenv"), 1);
 var import_app = require("firebase-admin/app");
 var import_auth = require("firebase-admin/auth");
 var import_firestore = require("firebase-admin/firestore");
+var import_crypto = __toESM(require("crypto"), 1);
 import_dotenv.default.config();
 var app = null;
 var isFirebaseAdminConfigured = Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
@@ -344,25 +364,38 @@ function getAdminApp() {
 function getDb() {
   return (0, import_firestore.getFirestore)(getAdminApp());
 }
-async function requireAuth(req, res, next) {
-  if (!isFirebaseAdminConfigured) {
-    res.status(503).json({ error: "auth_not_configured", message: "Server auth is not set up yet." });
-    return;
+var SECRET = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "anchor-secret-key-123456";
+function signToken(payload) {
+  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = import_crypto.default.createHmac("sha256", SECRET).update(data).digest("base64url");
+  return `${data}.${signature}`;
+}
+function verifyToken(token) {
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [data, signature] = parts;
+  const expectedSignature = import_crypto.default.createHmac("sha256", SECRET).update(data).digest("base64url");
+  if (signature !== expectedSignature) return null;
+  try {
+    return JSON.parse(Buffer.from(data, "base64url").toString());
+  } catch {
+    return null;
   }
+}
+async function requireAuth(req, res, next) {
   const header = req.headers.authorization ?? "";
   const match = /^Bearer (.+)$/.exec(header);
   if (!match) {
     res.status(401).json({ error: "missing_token" });
     return;
   }
-  try {
-    const decoded = await (0, import_auth.getAuth)(getAdminApp()).verifyIdToken(match[1]);
-    req.uid = decoded.uid;
-    next();
-  } catch (error) {
-    console.error("Token verification failed:", error);
+  const payload = verifyToken(match[1]);
+  if (!payload) {
     res.status(401).json({ error: "invalid_token" });
+    return;
   }
+  req.uid = payload.email;
+  next();
 }
 
 // progress-store.ts
@@ -583,9 +616,13 @@ function dryRunCheckAndIncrementFreeChat(uid) {
 }
 
 // server.ts
-import_dotenv2.default.config();
-var DRY_RUN = process.env.DRY_RUN === "true";
-var VERCEL_HOSTING = process.env.VERCEL_HOSTING === "true";
+import_dotenv2.default.config({ override: true });
+function isDryRun() {
+  return process.env.DRY_RUN?.trim().toLowerCase() === "true";
+}
+function isVercelHosting() {
+  return process.env.V_HOSTING?.trim().toLowerCase() === "true" || process.env.V_HOSTING?.trim().toLowerCase() === "true";
+}
 var app2 = (0, import_express.default)();
 function isWhitelistedUser(email, pass) {
   const trimmedEmail = email.trim().toLowerCase();
@@ -619,8 +656,8 @@ function isWhitelistedUser(email, pass) {
   return false;
 }
 function requirePreviewAuth(req, res, next) {
-  if (!VERCEL_HOSTING) return next();
-  if (req.path.startsWith("/api/auth/preview") || req.path === "/api/health" || req.path === "/api/stripe/webhook") {
+  if (!isVercelHosting() || !req.path.startsWith("/api/")) return next();
+  if (req.path.startsWith("/api/auth/preview") || req.path === "/api/health" || req.path === "/api/stripe/webhook" || req.path === "/api/custom-login") {
     return next();
   }
   const cookieHeader = req.headers.cookie || "";
@@ -660,34 +697,53 @@ app2.use(import_express.default.json());
 app2.use(requirePreviewAuth);
 var aiClient = null;
 function getGeminiClient() {
-  if (DRY_RUN) {
-    if (!aiClient) aiClient = createDryRunAI();
-    return aiClient;
-  }
   if (!aiClient) {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    if (apiKey) {
+      aiClient = new import_genai.GoogleGenAI({ apiKey });
+    } else if (isDryRun()) {
+      aiClient = createDryRunAI();
+    } else {
       throw new Error("GEMINI_API_KEY environment variable is missing. Set it in .env.");
     }
-    aiClient = new import_genai.GoogleGenAI({ apiKey });
   }
   return aiClient;
 }
 async function requireAuthUnlessDryRun(req, res, next) {
-  if (DRY_RUN) {
+  if (isDryRun()) {
     req.uid = "dry-run-user";
     next();
     return;
   }
   await requireAuth(req, res, next);
 }
+app2.post("/api/custom-login", async (req, res) => {
+  const { email, password } = req.body || {};
+  if (typeof email !== "string" || typeof password !== "string") {
+    res.status(400).json({ ok: false, error: "Email and password are required." });
+    return;
+  }
+  const trimmedEmail = email.trim().toLowerCase();
+  if (!isWhitelistedUser(trimmedEmail, password)) {
+    res.status(401).json({ ok: false, error: "Invalid email or password." });
+    return;
+  }
+  try {
+    const token = signToken({ email: trimmedEmail });
+    res.json({ ok: true, token });
+  } catch (error) {
+    console.error("Custom login failed:", error);
+    res.status(500).json({ ok: false, error: error?.message || "Failed to authenticate." });
+  }
+});
 app2.get("/api/auth/preview-status", (req, res) => {
   const cookieHeader = req.headers.cookie || "";
   const tokenHeader = req.headers["x-preview-auth"];
-  const isAuthenticated = !VERCEL_HOSTING || cookieHeader.includes("anchor_preview_auth=true") || tokenHeader === "true";
+  const vercelHosting = isVercelHosting();
+  const isAuthenticated = !vercelHosting || cookieHeader.includes("anchor_preview_auth=true") || tokenHeader === "true";
   res.json({
     ok: true,
-    vercelHosting: VERCEL_HOSTING,
+    vercelHosting,
     authenticated: isAuthenticated
   });
 });
@@ -711,11 +767,11 @@ app2.post("/api/auth/preview-logout", (_req, res) => {
 app2.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
-    geminiConfigured: DRY_RUN || Boolean(process.env.GEMINI_API_KEY),
-    dryRun: DRY_RUN,
+    geminiConfigured: isDryRun() || Boolean(process.env.GEMINI_API_KEY),
+    dryRun: isDryRun(),
     authConfigured: isFirebaseAdminConfigured,
     stripeConfigured: isStripeConfigured,
-    vercelHosting: VERCEL_HOSTING
+    vercelHosting: isVercelHosting()
   });
 });
 app2.get("/api/verse", (req, res) => {
@@ -729,7 +785,7 @@ app2.get("/api/verse", (req, res) => {
   res.json(result);
 });
 app2.get("/api/progress", requireAuthUnlessDryRun, async (req, res) => {
-  if (DRY_RUN) {
+  if (isDryRun()) {
     res.json({ ok: true, profile: dryRunGetOrCreateProfile(req.uid) });
     return;
   }
@@ -748,7 +804,7 @@ app2.post("/api/progress/complete", requireAuthUnlessDryRun, async (req, res) =>
     res.status(400).json({ ok: false, error: "missing_lesson_id" });
     return;
   }
-  if (DRY_RUN) {
+  if (isDryRun()) {
     res.json({ ok: true, profile: dryRunCompleteLesson(req.uid, lessonId, xpReward) });
     return;
   }
@@ -804,7 +860,7 @@ app2.post("/api/chat", requireAuthUnlessDryRun, async (req, res) => {
   }
   if (isFreeChat) {
     try {
-      const { allowed } = DRY_RUN ? dryRunCheckAndIncrementFreeChat(req.uid) : await checkAndIncrementFreeChat(req.uid);
+      const { allowed } = isDryRun() ? dryRunCheckAndIncrementFreeChat(req.uid) : await checkAndIncrementFreeChat(req.uid);
       if (!allowed) {
         res.status(402).json({
           ok: false,
@@ -845,14 +901,17 @@ async function startServer() {
   }
   if (!process.env.VERCEL) {
     app2.listen(PORT, "0.0.0.0", () => {
-      console.log(`Anchor server running on port ${PORT}${DRY_RUN ? " (DRY RUN \u2014 no Gemini calls will be made)" : ""}`);
-      if (VERCEL_HOSTING) {
-        console.log("VERCEL_HOSTING is enabled \u2014 Preview Whitelist Gatekeeper active.");
+      const hasKey = Boolean(process.env.GEMINI_API_KEY);
+      const isDry = isDryRun();
+      const geminiMode = hasKey ? "real Gemini calls" : "mock Gemini";
+      console.log(`Anchor server running on port ${PORT} (${isDry ? "DRY RUN Auth" : "Firebase Auth"} mode \u2014 ${geminiMode})`);
+      if (isVercelHosting()) {
+        console.log("V_HOSTING is enabled \u2014 Preview Whitelist Gatekeeper active.");
       }
-      if (!DRY_RUN && !process.env.GEMINI_API_KEY) {
+      if (!hasKey) {
         console.warn("GEMINI_API_KEY is not set \u2014 /api/health will report geminiConfigured: false.");
       }
-      if (!DRY_RUN && !isFirebaseAdminConfigured) {
+      if (!isDry && !isFirebaseAdminConfigured) {
         console.warn("FIREBASE_SERVICE_ACCOUNT_JSON is not set \u2014 /api/chat and /api/progress will reject all requests until it's configured.");
       }
     });

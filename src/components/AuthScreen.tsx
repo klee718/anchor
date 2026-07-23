@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { signInWithCustomToken } from "firebase/auth";
-import { isFirebaseConfigured, getFirebaseAuth, signInWithGoogle } from "../firebase";
+import { isFirebaseConfigured, signInWithGoogle, loginWithSessionToken } from "../firebase";
 
 interface Props {
   onAuthed: () => void;
@@ -31,8 +30,7 @@ export default function AuthScreen({ onAuthed }: Props) {
         throw new Error(data.error || 'Invalid credentials in users.txt');
       }
 
-      const auth = getFirebaseAuth();
-      await signInWithCustomToken(auth, data.token);
+      await loginWithSessionToken(data.token);
       onAuthed();
     } catch (err: any) {
       setError(err?.message ?? "Failed to connect to backend authentication server.");
