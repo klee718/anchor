@@ -5,6 +5,31 @@ interface Props {
   onAuthed: () => void;
 }
 
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+
+  try {
+    const response = await fetch('/api/preview-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      // Refresh to load the authenticated session cookie set by server.ts
+      window.location.reload();
+    } else {
+      setError(data.error || 'Invalid credentials in users.txt');
+    }
+  } catch (err) {
+    setError('Failed to connect to authentication server.');
+  }
+};
+
+
 export default function AuthScreen({ onAuthed }: Props) {
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
