@@ -385,6 +385,15 @@ async function startServer() {
   }
 }
 
+// Global Express Error Handler: Guarantee all server errors return JSON instead of HTML
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error("Server error caught by global handler:", err);
+  res.status(500).json({
+    ok: false,
+    error: err?.message || "Internal server error.",
+  });
+});
+
 startServer();
 
 export default app;

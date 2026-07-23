@@ -934,6 +934,13 @@ async function startServer() {
     });
   }
 }
+app2.use((err, _req, res, _next) => {
+  console.error("Server error caught by global handler:", err);
+  res.status(500).json({
+    ok: false,
+    error: err?.message || "Internal server error."
+  });
+});
 startServer();
 var server_default = app2;
 // Annotate the CommonJS export names for ESM import in node:
