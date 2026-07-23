@@ -4,7 +4,7 @@
   "outputDirectory": "dist",
   "functions": {
     "api/**/*.[jt]s": {
-      "includeFiles": ["users.txt", "data/**"]
+      "includeFiles": "{users.txt,data/**}"
     }
   },
   "rewrites": [
