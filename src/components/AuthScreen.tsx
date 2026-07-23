@@ -8,6 +8,7 @@ interface Props {
 const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   setError('');
+  setLoading(true);
 
   try {
     const response = await fetch('/api/preview-auth', {
@@ -19,15 +20,19 @@ const handleLogin = async (e: React.FormEvent) => {
     const data = await response.json();
 
     if (response.ok && data.success) {
-      // Reload page to apply session cookie set by server.ts
+      // Refresh page so server.ts cookie session applies
       window.location.reload();
     } else {
-      setError(data.error || 'Invalid email or password from users.txt');
+      setError(data.error || 'Invalid credentials in users.txt');
     }
   } catch (err) {
-    setError('Failed to authenticate with server');
+    setError('Failed to connect to backend authentication server.');
+  } finally {
+    setLoading(false);
   }
 };
+
+
 export default function AuthScreen({ onAuthed }: Props) {
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
