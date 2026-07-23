@@ -5,9 +5,6 @@
   "functions": {
     "api/index.ts": {
       "includeFiles": "{users.txt,data/**}"
-    },
-    "api/**/*.ts": {
-      "includeFiles": "{users.txt,data/**}"
     }
   },
   "rewrites": [
