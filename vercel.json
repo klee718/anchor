@@ -3,7 +3,10 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/**/*.[jt]s": {
+    "api/index.ts": {
+      "includeFiles": "{users.txt,data/**}"
+    },
+    "api/**/*.ts": {
       "includeFiles": "{users.txt,data/**}"
     }
   },

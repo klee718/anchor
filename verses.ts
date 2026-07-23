@@ -17,9 +17,15 @@ function resolveDataFile(relativePath: string): string {
   return path.join(process.cwd(), relativePath);
 }
 
-const BOOKS: Array<[name: string, usfxId: string, osisId: string]> = JSON.parse(
-  fs.readFileSync(resolveDataFile("data/books.json"), "utf-8")
-);
+let BOOKS: Array<[name: string, usfxId: string, osisId: string]> = [];
+try {
+  const booksFile = resolveDataFile("data/books.json");
+  if (fs.existsSync(booksFile)) {
+    BOOKS = JSON.parse(fs.readFileSync(booksFile, "utf-8"));
+  }
+} catch (err) {
+  console.error("Warning: data/books.json could not be loaded:", err);
+}
 const BOOK_NAMES = BOOKS.map(([name]) => name);
 const LOWER_TO_CANONICAL = new Map(BOOK_NAMES.map((name) => [name.toLowerCase(), name]));
 
