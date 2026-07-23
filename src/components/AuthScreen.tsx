@@ -1,59 +1,41 @@
 import { useState, type FormEvent } from "react";
-import { isFirebaseConfigured, signUpWithEmail, signInWithEmail, signInWithGoogle } from "../firebase";
+import { signInWithCustomToken } from "firebase/auth";
+import { isFirebaseConfigured, getFirebaseAuth, signInWithGoogle } from "../firebase";
 
 interface Props {
   onAuthed: () => void;
 }
 
-const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
-  setLoading(true);
-
-  try {
-    const response = await fetch('/api/preview-auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok && data.success) {
-      // Refresh page so server.ts cookie session applies
-      window.location.reload();
-    } else {
-      setError(data.error || 'Invalid credentials in users.txt');
-    }
-  } catch (err) {
-    setError('Failed to connect to backend authentication server.');
-  } finally {
-    setLoading(false);
-  }
-};
-
-
 export default function AuthScreen({ onAuthed }: Props) {
-  const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleLogin(e: FormEvent) {
     e.preventDefault();
     if (!email.trim() || !password.trim() || loading) return;
     setLoading(true);
     setError(null);
+
     try {
-      if (mode === "signUp") {
-        await signUpWithEmail(email.trim(), password);
-      } else {
-        await signInWithEmail(email.trim(), password);
+      const response = await fetch('/api/custom-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid credentials in users.txt');
       }
+
+      const auth = getFirebaseAuth();
+      await signInWithCustomToken(auth, data.token);
       onAuthed();
     } catch (err: any) {
-      setError(err?.message ?? "Something went wrong. Please try again.");
+      setError(err?.message ?? "Failed to connect to backend authentication server.");
     } finally {
       setLoading(false);
     }
@@ -86,7 +68,7 @@ export default function AuthScreen({ onAuthed }: Props) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleLogin} className="flex flex-col gap-3">
           <input
             type="email"
             placeholder="Email"
@@ -111,7 +93,7 @@ export default function AuthScreen({ onAuthed }: Props) {
             disabled={loading || !isFirebaseConfigured}
             className="mt-1 rounded-xl bg-[#1C1209] px-4 py-2.5 text-sm font-bold text-white shadow-[0_3px_0_#0a0704] transition active:translate-y-0.5 active:shadow-none disabled:opacity-40"
           >
-            {mode === "signUp" ? "Create account" : "Log in"}
+            Log in
           </button>
         </form>
 
@@ -123,16 +105,8 @@ export default function AuthScreen({ onAuthed }: Props) {
           Continue with Google
         </button>
 
-        <button
-          onClick={() => setMode(mode === "signUp" ? "signIn" : "signUp")}
-          disabled={loading}
-          className="mt-4 w-full text-center text-xs text-[#8C7B6B] hover:text-[#1C1209] transition"
-        >
-          {mode === "signUp" ? "Already have an account? Log in" : "New here? Create an account"}
-        </button>
-
         <p className="mt-8 text-center text-[11px] leading-relaxed text-[#8C7B6B]">
-          {mode === "signUp" ? "By creating an account, you agree to our " : "See our "}
+          See our{" "}
           <a href="/terms.html" target="_blank" rel="noopener" className="underline hover:text-[#1C1209]">
             Terms of Service
           </a>{" "}

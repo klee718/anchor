@@ -9,7 +9,7 @@ import { GoogleGenAI } from "@google/genai";
 import { type Translation, lookupReference } from "./verses";
 import { runChatTurn, generateLessonOpeningQuestion, isRateLimited, RATE_LIMIT_MESSAGE, type ChatMessage } from "./chat";
 import { createDryRunAI } from "./dev-mock";
-import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest } from "./firebase-admin";
+import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest, getAdminAuthInstance } from "./firebase-admin";
 import { getOrCreateProfile, completeLesson, checkAndIncrementFreeChat, setPremiumStatus, findUidByStripeCustomerId } from "./progress-store";
 import { createCheckoutSession, constructWebhookEvent, interpretWebhookEvent, isStripeConfigured } from "./stripe-admin";
 import { dryRunGetOrCreateProfile, dryRunCompleteLesson, dryRunCheckAndIncrementFreeChat } from "./dry-run-store";
@@ -73,7 +73,8 @@ function requirePreviewAuth(req: express.Request, res: express.Response, next: e
   if (
     req.path.startsWith("/api/auth/preview") ||
     req.path === "/api/health" ||
-    req.path === "/api/stripe/webhook"
+    req.path === "/api/stripe/webhook" ||
+    req.path === "/api/custom-login"
   ) {
     return next();
   }
@@ -146,6 +147,56 @@ async function requireAuthUnlessDryRun(req: AuthedRequest, res: express.Response
   }
   await requireAuth(req, res, next);
 }
+
+// --- Custom Login Endpoint ---
+app.post("/api/custom-login", async (req, res) => {
+  const { email, password } = req.body || {};
+  if (typeof email !== "string" || typeof password !== "string") {
+    res.status(400).json({ ok: false, error: "Email and password are required." });
+    return;
+  }
+
+  const trimmedEmail = email.trim().toLowerCase();
+
+  // 1. Verify credentials against users.txt / ALLOWED_USERS
+  if (!isWhitelistedUser(trimmedEmail, password)) {
+    res.status(401).json({ ok: false, error: "Invalid email or password." });
+    return;
+  }
+
+  // If in dry-run mode, we can just generate a fake/stub response or bypass real custom token generation
+  // if Firebase is not fully configured, otherwise proceed with standard custom token generation.
+  if (isDryRun() && !isFirebaseAdminConfigured) {
+    res.json({ ok: true, token: "dry-run-custom-token" });
+    return;
+  }
+
+  try {
+    const adminAuth = getAdminAuthInstance();
+    let uid: string;
+
+    try {
+      // 2. See if a Firebase user already exists for this email
+      const userRecord = await adminAuth.getUserByEmail(trimmedEmail);
+      uid = userRecord.uid;
+    } catch (err: any) {
+      // If user does not exist (auth/user-not-found), create them on the fly
+      if (err.code === "auth/user-not-found") {
+        const newUserRecord = await adminAuth.createUser({ email: trimmedEmail });
+        uid = newUserRecord.uid;
+      } else {
+        throw err;
+      }
+    }
+
+    // 3. Generate a custom token
+    const customToken = await adminAuth.createCustomToken(uid);
+    res.json({ ok: true, token: customToken });
+  } catch (error: any) {
+    console.error("Custom login failed:", error);
+    res.status(500).json({ ok: false, error: error?.message || "Failed to authenticate." });
+  }
+});
 
 // --- Preview Auth Endpoints ---
 app.get("/api/auth/preview-status", (req, res) => {

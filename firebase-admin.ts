@@ -39,6 +39,10 @@ function getAdminApp(): App {
   return app;
 }
 
+export function getAdminAuthInstance() {
+  return getAdminAuth(getAdminApp());
+}
+
 export function getDb(): Firestore {
   return getFirestore(getAdminApp());
 }
