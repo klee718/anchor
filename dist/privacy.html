@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — Anchor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+      h1, h2, .font-serif { font-family: 'Cormorant Garamond', serif; }
+      body { margin: 0; background: #EDE8E0; color: #1C1209; line-height: 1.6; }
+      main { max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+      h1 { font-size: 2.25rem; margin-bottom: 4px; }
+      .meta { color: #8C7B6B; font-size: 0.85rem; margin-bottom: 32px; }
+      h2 { font-size: 1.4rem; margin-top: 40px; margin-bottom: 12px; color: #1C1209; }
+      p, li { color: #4A3728; font-size: 0.95rem; }
+      ul { padding-left: 1.25rem; }
+      .draft-banner {
+        background: #C8A26118; border: 1px solid #C8A261; border-radius: 12px;
+        padding: 16px 20px; margin-bottom: 32px; font-size: 0.9rem; color: #4A3728;
+      }
+      .draft-banner strong { color: #1C1209; }
+      a { color: #5B4FCF; }
+      .back { display: inline-block; margin-top: 48px; font-size: 0.9rem; color: #8C7B6B; text-decoration: none; }
+      .back:hover { color: #1C1209; }
+      table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.9rem; }
+      th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #D9D0C4; color: #4A3728; }
+      th { color: #1C1209; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Privacy Policy</h1>
+      <p class="meta">Last updated: July 6, 2026 · Anchor</p>
+
+      <div class="draft-banner">
+        <strong>Draft — not yet reviewed by a lawyer.</strong> This document describes, honestly and specifically,
+        what Anchor's code actually does with your data as of the date above. It has not had a legal review.
+        Before this app takes real payments or is opened up to real users, have an actual attorney review this
+        page, particularly around the crisis-detection disclosure below and any jurisdiction-specific requirements
+        (GDPR, CCPA, etc.) that apply to where your users are.
+      </div>
+
+      <h2>What we collect</h2>
+      <table>
+        <tr><th>Data</th><th>Source</th><th>Why</th></tr>
+        <tr><td>Email address, password (or Google account info)</td><td>Firebase Authentication</td><td>Sign-in. We never see your raw password — Firebase handles it.</td></tr>
+        <tr><td>XP, level, streak, completed lessons</td><td>Our servers (Firestore)</td><td>To show your progress and sync it across devices.</td></tr>
+        <tr><td>Subscription status, Stripe customer ID</td><td>Stripe</td><td>To know whether you have Premium access.</td></tr>
+        <tr><td>Messages you send in conversation</td><td>Sent to Google's Gemini API</td><td>To generate a response. See "Your conversations," below.</td></tr>
+        <tr><td>IP address</td><td>Our server, temporarily</td><td>Basic abuse/rate-limit protection. Not written to a database.</td></tr>
+      </table>
+
+      <h2>Your conversations</h2>
+      <p>
+        When you talk with Anchor, your message is sent to Google's Gemini API to generate a response, and to a
+        Bible-verse lookup that runs entirely on our own server (never a third party). <strong>We do not store your
+        conversation transcripts in our own database.</strong> Messages exist for the length of your conversation and
+        are sent to Google for processing under
+        <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener">Google's Gemini API terms</a> —
+        we encourage you to read them if you want to understand Google's own retention practices.
+      </p>
+
+      <h2>A note on the crisis-detection feature</h2>
+      <p>
+        Anchor tries to notice when a conversation suggests real emotional distress and, when it does, responds
+        with real crisis resources (in the US: call or text 988, or text HOME to 741741) instead of continuing the
+        conversation as normal. <strong>This is an automated, imperfect feature, not a monitored safety service.</strong>
+        Research on similar systems shows even well-built crisis detection misses real signal a meaningful fraction
+        of the time. Anchor is not a substitute for a licensed mental health professional, and you should not rely
+        on it as your only safety net. If you are in crisis, please contact a real person or service directly.
+      </p>
+
+      <h2>Payments</h2>
+      <p>
+        Stripe processes your payment. <strong>We never see or store your card number</strong> — Stripe's hosted
+        checkout page handles that entirely. We only store your Stripe customer ID and whether your subscription is
+        active, so we know whether to unlock Premium content for your account.
+      </p>
+
+      <h2>Who can see your data</h2>
+      <p>
+        Your progress data lives in a Firestore database only our server can read or write — nothing is publicly
+        readable. We don't sell your data, and we don't share it with anyone except the service providers named on
+        this page (Google Firebase, Google Gemini API, Stripe), each acting as a processor to make Anchor work.
+      </p>
+
+      <h2>Your choices</h2>
+      <ul>
+        <li>You can log out at any time.</li>
+        <li>To delete your account and associated progress data, contact us (see below) — we haven't yet built
+          self-service account deletion.</li>
+        <li>You can cancel your Premium subscription at any time through Stripe's customer portal or by contacting us.</li>
+      </ul>
+
+      <h2>Children</h2>
+      <p>
+        Anchor is not directed at children under 13, and we don't knowingly collect data from anyone under 13. If
+        you believe a child has created an account, contact us and we'll address it.
+      </p>
+
+      <h2>Changes to this policy</h2>
+      <p>
+        If this policy changes in a way that meaningfully affects how your data is used, we'll update the date at
+        the top of this page.
+      </p>
+
+      <h2>Contact</h2>
+      <p>Questions about this policy? [Add a real contact email before launch.]</p>
+
+      <a class="back" href="/">← Back to Anchor</a>
+    </main>
+  </body>
+</html>

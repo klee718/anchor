@@ -1,0 +1,12 @@
+#Anchor Vercel Preview Users Whitelist
+# Format: email:password (one per line)
+# Lines starting with # are ignored.
+
+
+ 
+jake@anchor.com:sentinels
+phoebe@anchor.com:sheep
+church@anchor.com:newjersey
+kai@anchor.com:dejavunyc
+guest@example.com:anchor2026
+admin@example.com:preview123
