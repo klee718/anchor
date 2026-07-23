@@ -3,8 +3,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/**/*.ts": {
-      "includeFiles": "{server/**,src/**}"
+    "api/**/*.[jt]s": {
+      "includeFiles": "server/**"
     }
   },
   "rewrites": [
