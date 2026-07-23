@@ -19,7 +19,10 @@ function isDryRun(): boolean {
 }
 
 function isVercelHosting(): boolean {
-  return process.env.VERCEL_HOSTING?.trim().toLowerCase() === "true";
+  return (
+    process.env.V_HOSTING?.trim().toLowerCase() === "true" ||
+    process.env.VERCEL_HOSTING?.trim().toLowerCase() === "true"
+  );
 }
 
 export const app = express();
