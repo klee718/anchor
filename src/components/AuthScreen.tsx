@@ -19,17 +19,15 @@ const handleLogin = async (e: React.FormEvent) => {
     const data = await response.json();
 
     if (response.ok && data.success) {
-      // Refresh to load the authenticated session cookie set by server.ts
+      // Reload page to apply session cookie set by server.ts
       window.location.reload();
     } else {
-      setError(data.error || 'Invalid credentials in users.txt');
+      setError(data.error || 'Invalid email or password from users.txt');
     }
   } catch (err) {
-    setError('Failed to connect to authentication server.');
+    setError('Failed to authenticate with server');
   }
 };
-
-
 export default function AuthScreen({ onAuthed }: Props) {
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
