@@ -717,6 +717,12 @@ app2.post("/api/stripe/webhook", import_express.default.raw({ type: "application
   }
 });
 app2.use(import_express.default.json());
+app2.use((req, _res, next) => {
+  if (req.url && !req.url.startsWith("/api") && req.url !== "/") {
+    req.url = "/api" + (req.url.startsWith("/") ? req.url : "/" + req.url);
+  }
+  next();
+});
 app2.use(requirePreviewAuth);
 var aiClient = null;
 function getGeminiClient() {
@@ -941,6 +947,9 @@ async function startServer() {
     });
   }
 }
+app2.use((_req, res) => {
+  res.status(404).json({ ok: false, error: "API endpoint not found." });
+});
 app2.use((err, _req, res, _next) => {
   console.error("Server error caught by global handler:", err);
   res.status(500).json({

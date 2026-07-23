@@ -123,6 +123,15 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 });
 
 app.use(express.json());
+
+// URL normalizer for Vercel serverless rewrites: ensures req.url always has /api prefix
+app.use((req, _res, next) => {
+  if (req.url && !req.url.startsWith("/api") && req.url !== "/") {
+    req.url = "/api" + (req.url.startsWith("/") ? req.url : "/" + req.url);
+  }
+  next();
+});
+
 app.use(requirePreviewAuth);
 
 // Lazy initialization of Gemini client
@@ -385,6 +394,11 @@ async function startServer() {
     });
   }
 }
+
+// Fallback 404 Handler for API routes: Ensure all unmatched API calls return JSON instead of HTML
+app.use((_req, res) => {
+  res.status(404).json({ ok: false, error: "API endpoint not found." });
+});
 
 // Global Express Error Handler: Guarantee all server errors return JSON instead of HTML
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
