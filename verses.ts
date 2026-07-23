@@ -5,9 +5,20 @@ export type Translation = "web" | "kjv";
 
 type BibleData = Record<string, Record<string, Record<string, string>>>;
 
-const DATA_DIR = path.join(process.cwd(), "data");
+function resolveDataFile(relativePath: string): string {
+  const candidates = [
+    path.join(process.cwd(), relativePath),
+    path.join(__dirname, relativePath),
+    path.join(__dirname, "..", relativePath),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return path.join(process.cwd(), relativePath);
+}
+
 const BOOKS: Array<[name: string, usfxId: string, osisId: string]> = JSON.parse(
-  fs.readFileSync(path.join(DATA_DIR, "books.json"), "utf-8")
+  fs.readFileSync(resolveDataFile("data/books.json"), "utf-8")
 );
 const BOOK_NAMES = BOOKS.map(([name]) => name);
 const LOWER_TO_CANONICAL = new Map(BOOK_NAMES.map((name) => [name.toLowerCase(), name]));
@@ -18,8 +29,10 @@ const LOWER_TO_CANONICAL = new Map(BOOK_NAMES.map((name) => [name.toLowerCase(),
 // name is plural "Psalms". Aliases map the common form to the canonical one.
 const BOOK_ALIASES: Record<string, string> = {
   psalm: "Psalms",
+  psalms: "Psalms",
   revelations: "Revelation",
-  "song of songs": "Song of Solomon",
+  song: "Song of Solomon",
+  "songs of solomon": "Song of Solomon",
 };
 for (const [alias, canonical] of Object.entries(BOOK_ALIASES)) {
   LOWER_TO_CANONICAL.set(alias, canonical);
@@ -29,7 +42,7 @@ const cache: Partial<Record<Translation, BibleData>> = {};
 
 function loadTranslation(translation: Translation): BibleData {
   if (!cache[translation]) {
-    const file = path.join(DATA_DIR, `${translation}.json`);
+    const file = resolveDataFile(`data/${translation}.json`);
     cache[translation] = JSON.parse(fs.readFileSync(file, "utf-8"));
   }
   return cache[translation]!;

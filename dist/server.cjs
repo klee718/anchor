@@ -37,22 +37,33 @@ var import_dotenv2 = __toESM(require("dotenv"), 1);
 var import_express = __toESM(require("express"), 1);
 var import_fs2 = __toESM(require("fs"), 1);
 var import_path2 = __toESM(require("path"), 1);
-var import_vite = require("vite");
 var import_genai = require("@google/genai");
 
 // verses.ts
 var import_fs = __toESM(require("fs"), 1);
 var import_path = __toESM(require("path"), 1);
-var DATA_DIR = import_path.default.join(process.cwd(), "data");
+function resolveDataFile(relativePath) {
+  const candidates = [
+    import_path.default.join(process.cwd(), relativePath),
+    import_path.default.join(__dirname, relativePath),
+    import_path.default.join(__dirname, "..", relativePath)
+  ];
+  for (const candidate of candidates) {
+    if (import_fs.default.existsSync(candidate)) return candidate;
+  }
+  return import_path.default.join(process.cwd(), relativePath);
+}
 var BOOKS = JSON.parse(
-  import_fs.default.readFileSync(import_path.default.join(DATA_DIR, "books.json"), "utf-8")
+  import_fs.default.readFileSync(resolveDataFile("data/books.json"), "utf-8")
 );
 var BOOK_NAMES = BOOKS.map(([name]) => name);
 var LOWER_TO_CANONICAL = new Map(BOOK_NAMES.map((name) => [name.toLowerCase(), name]));
 var BOOK_ALIASES = {
   psalm: "Psalms",
+  psalms: "Psalms",
   revelations: "Revelation",
-  "song of songs": "Song of Solomon"
+  song: "Song of Solomon",
+  "songs of solomon": "Song of Solomon"
 };
 for (const [alias, canonical] of Object.entries(BOOK_ALIASES)) {
   LOWER_TO_CANONICAL.set(alias, canonical);
@@ -60,7 +71,7 @@ for (const [alias, canonical] of Object.entries(BOOK_ALIASES)) {
 var cache = {};
 function loadTranslation(translation) {
   if (!cache[translation]) {
-    const file = import_path.default.join(DATA_DIR, `${translation}.json`);
+    const file = resolveDataFile(`data/${translation}.json`);
     cache[translation] = JSON.parse(import_fs.default.readFileSync(file, "utf-8"));
   }
   return cache[translation];
@@ -637,8 +648,13 @@ function isWhitelistedUser(email, pass) {
     }
   }
   try {
-    const txtPath = import_path2.default.join(process.cwd(), "users.txt");
-    if (import_fs2.default.existsSync(txtPath)) {
+    const candidates = [
+      import_path2.default.join(process.cwd(), "users.txt"),
+      import_path2.default.join(__dirname, "users.txt"),
+      import_path2.default.join(__dirname, "..", "users.txt")
+    ];
+    const txtPath = candidates.find((p) => import_fs2.default.existsSync(p));
+    if (txtPath) {
       const content = import_fs2.default.readFileSync(txtPath, "utf-8");
       const lines = content.split("\n");
       for (const line of lines) {
@@ -887,7 +903,8 @@ app2.post("/api/chat", requireAuthUnlessDryRun, async (req, res) => {
 async function startServer() {
   const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
   if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
-    const vite = await (0, import_vite.createServer)({
+    const { createServer: createViteServer } = await import("vite");
+    const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa"
     });

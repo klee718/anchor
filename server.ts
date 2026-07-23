@@ -44,8 +44,13 @@ function isWhitelistedUser(email: string, pass: string): boolean {
 
   // 2. Check users.txt file in project root
   try {
-    const txtPath = path.join(process.cwd(), "users.txt");
-    if (fs.existsSync(txtPath)) {
+    const candidates = [
+      path.join(process.cwd(), "users.txt"),
+      path.join(__dirname, "users.txt"),
+      path.join(__dirname, "..", "users.txt"),
+    ];
+    const txtPath = candidates.find((p) => fs.existsSync(p));
+    if (txtPath) {
       const content = fs.readFileSync(txtPath, "utf-8");
       const lines = content.split("\n");
       for (const line of lines) {
