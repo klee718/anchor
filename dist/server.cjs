@@ -53,9 +53,15 @@ function resolveDataFile(relativePath) {
   }
   return import_path.default.join(process.cwd(), relativePath);
 }
-var BOOKS = JSON.parse(
-  import_fs.default.readFileSync(resolveDataFile("data/books.json"), "utf-8")
-);
+var BOOKS = [];
+try {
+  const booksFile = resolveDataFile("data/books.json");
+  if (import_fs.default.existsSync(booksFile)) {
+    BOOKS = JSON.parse(import_fs.default.readFileSync(booksFile, "utf-8"));
+  }
+} catch (err) {
+  console.error("Warning: data/books.json could not be loaded:", err);
+}
 var BOOK_NAMES = BOOKS.map(([name]) => name);
 var LOWER_TO_CANONICAL = new Map(BOOK_NAMES.map((name) => [name.toLowerCase(), name]));
 var BOOK_ALIASES = {
