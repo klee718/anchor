@@ -85,7 +85,8 @@ function requirePreviewAuth(req: express.Request, res: express.Response, next: e
 
   const cookieHeader = req.headers.cookie || "";
   const tokenHeader = req.headers["x-preview-auth"];
-  const isAuthenticated = cookieHeader.includes("anchor_preview_auth=true") || tokenHeader === "true";
+  const authHeader = req.headers.authorization;
+  const isAuthenticated = cookieHeader.includes("anchor_preview_auth=true") || tokenHeader === "true" || Boolean(authHeader);
 
   if (isAuthenticated) {
     return next();
