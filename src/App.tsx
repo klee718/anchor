@@ -46,7 +46,7 @@ export default function App() {
   const [paywallReason, setPaywallReason] = useState<"locked_unit" | "free_chat_limit" | null>(null);
   const [checkoutStatus, setCheckoutStatus] = useState<"success" | "cancelled" | null>(null);
 
-  // Check preview whitelist auth status (for VERCEL_HOSTING mode)
+  // Check preview whitelist auth status (for V_HOSTING mode)
   useEffect(() => {
     fetch("/api/auth/preview-status")
       .then((r) => r.json())
@@ -142,7 +142,7 @@ export default function App() {
   }, []);
 
   const handleLogout = useCallback(async () => {
-    // Clear preview auth cookie (if in VERCEL_HOSTING mode)
+    // Clear preview auth cookie (if in V_HOSTING mode)
     try {
       await fetch("/api/auth/preview-logout", { method: "POST" });
     } catch {}

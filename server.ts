@@ -21,13 +21,13 @@ function isDryRun(): boolean {
 function isVercelHosting(): boolean {
   return (
     process.env.V_HOSTING?.trim().toLowerCase() === "true" ||
-    process.env.VERCEL_HOSTING?.trim().toLowerCase() === "true"
+    process.env.V_HOSTING?.trim().toLowerCase() === "true"
   );
 }
 
 export const app = express();
 
-// Whitelist validator for VERCEL_HOSTING mode.
+// Whitelist validator for V_HOSTING mode.
 function isWhitelistedUser(email: string, pass: string): boolean {
   const trimmedEmail = email.trim().toLowerCase();
   const trimmedPass = pass.trim();
@@ -65,7 +65,7 @@ function isWhitelistedUser(email: string, pass: string): boolean {
   return false;
 }
 
-// Middleware: Preview Whitelist Auth Check (active when VERCEL_HOSTING=TRUE)
+// Middleware: Preview Whitelist Auth Check (active when V_HOSTING=TRUE)
 function requirePreviewAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
   if (!isVercelHosting() || !req.path.startsWith("/api/")) return next();
 
@@ -341,7 +341,7 @@ async function startServer() {
       const geminiMode = hasKey ? "real Gemini calls" : "mock Gemini";
       console.log(`Anchor server running on port ${PORT} (${isDry ? "DRY RUN Auth" : "Firebase Auth"} mode — ${geminiMode})`);
       if (isVercelHosting()) {
-        console.log("VERCEL_HOSTING is enabled — Preview Whitelist Gatekeeper active.");
+        console.log("V_HOSTING is enabled — Preview Whitelist Gatekeeper active.");
       }
       if (!hasKey) {
         console.warn("GEMINI_API_KEY is not set — /api/health will report geminiConfigured: false.");
