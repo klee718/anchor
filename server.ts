@@ -4,12 +4,11 @@ dotenv.config({ override: true });
 import express from "express";
 import fs from "fs";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import { type Translation, lookupReference } from "./verses";
 import { runChatTurn, generateLessonOpeningQuestion, isRateLimited, RATE_LIMIT_MESSAGE, type ChatMessage } from "./chat";
 import { createDryRunAI } from "./dev-mock";
-import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest, getAdminAuthInstance, signToken } from "./firebase-admin";
+import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest, signToken } from "./firebase-admin";
 import { getOrCreateProfile, completeLesson, checkAndIncrementFreeChat, setPremiumStatus, findUidByStripeCustomerId } from "./progress-store";
 import { createCheckoutSession, constructWebhookEvent, interpretWebhookEvent, isStripeConfigured } from "./stripe-admin";
 import { dryRunGetOrCreateProfile, dryRunCompleteLesson, dryRunCheckAndIncrementFreeChat } from "./dry-run-store";
@@ -348,6 +347,7 @@ async function startServer() {
   const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
 
   if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
