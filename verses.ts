@@ -1,15 +1,28 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
 export type Translation = "web" | "kjv";
 
 type BibleData = Record<string, Record<string, Record<string, string>>>;
 
+function getDirname(): string {
+  if (typeof __dirname !== "undefined") return __dirname;
+  try {
+    const metaUrl = (import.meta as any)?.url;
+    if (metaUrl) return path.dirname(fileURLToPath(metaUrl));
+  } catch {
+    // ignore
+  }
+  return process.cwd();
+}
+
 function resolveDataFile(relativePath: string): string {
+  const baseDir = getDirname();
   const candidates = [
     path.join(process.cwd(), relativePath),
-    path.join(__dirname, relativePath),
-    path.join(__dirname, "..", relativePath),
+    path.join(baseDir, relativePath),
+    path.join(baseDir, "..", relativePath),
   ];
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) return candidate;

@@ -37,16 +37,29 @@ var import_dotenv2 = __toESM(require("dotenv"), 1);
 var import_express = __toESM(require("express"), 1);
 var import_fs2 = __toESM(require("fs"), 1);
 var import_path2 = __toESM(require("path"), 1);
+var import_url2 = require("url");
 var import_genai = require("@google/genai");
 
 // verses.ts
 var import_fs = __toESM(require("fs"), 1);
 var import_path = __toESM(require("path"), 1);
+var import_url = require("url");
+var import_meta = {};
+function getDirname() {
+  if (typeof __dirname !== "undefined") return __dirname;
+  try {
+    const metaUrl = import_meta?.url;
+    if (metaUrl) return import_path.default.dirname((0, import_url.fileURLToPath)(metaUrl));
+  } catch {
+  }
+  return process.cwd();
+}
 function resolveDataFile(relativePath) {
+  const baseDir = getDirname();
   const candidates = [
     import_path.default.join(process.cwd(), relativePath),
-    import_path.default.join(__dirname, relativePath),
-    import_path.default.join(__dirname, "..", relativePath)
+    import_path.default.join(baseDir, relativePath),
+    import_path.default.join(baseDir, "..", relativePath)
   ];
   for (const candidate of candidates) {
     if (import_fs.default.existsSync(candidate)) return candidate;
@@ -360,7 +373,6 @@ function createDryRunAI() {
 // firebase-admin.ts
 var import_dotenv = __toESM(require("dotenv"), 1);
 var import_app = require("firebase-admin/app");
-var import_auth = require("firebase-admin/auth");
 var import_firestore = require("firebase-admin/firestore");
 var import_crypto = __toESM(require("crypto"), 1);
 import_dotenv.default.config();
@@ -633,7 +645,17 @@ function dryRunCheckAndIncrementFreeChat(uid) {
 }
 
 // server.ts
+var import_meta2 = {};
 import_dotenv2.default.config({ override: true });
+function getDirname2() {
+  if (typeof __dirname !== "undefined") return __dirname;
+  try {
+    const metaUrl = import_meta2?.url;
+    if (metaUrl) return import_path2.default.dirname((0, import_url2.fileURLToPath)(metaUrl));
+  } catch {
+  }
+  return process.cwd();
+}
 function isDryRun() {
   return process.env.DRY_RUN?.trim().toLowerCase() === "true";
 }
@@ -654,10 +676,11 @@ function isWhitelistedUser(email, pass) {
     }
   }
   try {
+    const baseDir = getDirname2();
     const candidates = [
       import_path2.default.join(process.cwd(), "users.txt"),
-      import_path2.default.join(__dirname, "users.txt"),
-      import_path2.default.join(__dirname, "..", "users.txt")
+      import_path2.default.join(baseDir, "users.txt"),
+      import_path2.default.join(baseDir, "..", "users.txt")
     ];
     const txtPath = candidates.find((p) => import_fs2.default.existsSync(p));
     if (txtPath) {

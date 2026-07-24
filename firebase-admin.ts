@@ -12,7 +12,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { initializeApp, cert, getApps, type App } from "firebase-admin/app";
-import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import type { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
@@ -38,10 +37,6 @@ function getAdminApp(): App {
   const serviceAccount = JSON.parse(rawJson);
   app = initializeApp({ credential: cert(serviceAccount) });
   return app;
-}
-
-export function getAdminAuthInstance() {
-  return getAdminAuth(getAdminApp());
 }
 
 export function getDb(): Firestore {

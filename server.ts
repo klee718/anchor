@@ -4,6 +4,18 @@ dotenv.config({ override: true });
 import express from "express";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+
+function getDirname(): string {
+  if (typeof __dirname !== "undefined") return __dirname;
+  try {
+    const metaUrl = (import.meta as any)?.url;
+    if (metaUrl) return path.dirname(fileURLToPath(metaUrl));
+  } catch {
+    // ignore
+  }
+  return process.cwd();
+}
 import { GoogleGenAI } from "@google/genai";
 import { type Translation, lookupReference } from "./verses.js";
 import { runChatTurn, generateLessonOpeningQuestion, isRateLimited, RATE_LIMIT_MESSAGE, type ChatMessage } from "./chat.js";
@@ -44,10 +56,11 @@ function isWhitelistedUser(email: string, pass: string): boolean {
 
   // 2. Check users.txt file in project root
   try {
+    const baseDir = getDirname();
     const candidates = [
       path.join(process.cwd(), "users.txt"),
-      path.join(__dirname, "users.txt"),
-      path.join(__dirname, "..", "users.txt"),
+      path.join(baseDir, "users.txt"),
+      path.join(baseDir, "..", "users.txt"),
     ];
     const txtPath = candidates.find((p) => fs.existsSync(p));
     if (txtPath) {
