@@ -5,13 +5,13 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { GoogleGenAI } from "@google/genai";
-import { type Translation, lookupReference } from "./verses";
-import { runChatTurn, generateLessonOpeningQuestion, isRateLimited, RATE_LIMIT_MESSAGE, type ChatMessage } from "./chat";
-import { createDryRunAI } from "./dev-mock";
-import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest, signToken } from "./firebase-admin";
-import { getOrCreateProfile, completeLesson, checkAndIncrementFreeChat, setPremiumStatus, findUidByStripeCustomerId } from "./progress-store";
-import { createCheckoutSession, constructWebhookEvent, interpretWebhookEvent, isStripeConfigured } from "./stripe-admin";
-import { dryRunGetOrCreateProfile, dryRunCompleteLesson, dryRunCheckAndIncrementFreeChat } from "./dry-run-store";
+import { type Translation, lookupReference } from "./verses.js";
+import { runChatTurn, generateLessonOpeningQuestion, isRateLimited, RATE_LIMIT_MESSAGE, type ChatMessage } from "./chat.js";
+import { createDryRunAI } from "./dev-mock.js";
+import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest, signToken } from "./firebase-admin.js";
+import { getOrCreateProfile, completeLesson, checkAndIncrementFreeChat, setPremiumStatus, findUidByStripeCustomerId } from "./progress-store.js";
+import { createCheckoutSession, constructWebhookEvent, interpretWebhookEvent, isStripeConfigured } from "./stripe-admin.js";
+import { dryRunGetOrCreateProfile, dryRunCompleteLesson, dryRunCheckAndIncrementFreeChat } from "./dry-run-store.js";
 
 function isDryRun(): boolean {
   return process.env.DRY_RUN?.trim().toLowerCase() === "true";

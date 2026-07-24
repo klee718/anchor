@@ -1,5 +1,5 @@
 import { GoogleGenAI, FunctionDeclaration, Content, Part } from "@google/genai";
-import { lookupVerse, lookupReference, type Translation } from "./verses";
+import { lookupVerse, lookupReference, type Translation } from "./verses.js";
 
 // ---------------------------------------------------------------------------
 // System prompt (T3): the doubt-honoring conversational stance.

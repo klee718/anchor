@@ -5,7 +5,7 @@
 // everything else gets an obviously-fake placeholder reply. No Gemini calls,
 // no API key required, no quota used.
 import type { GoogleGenAI } from "@google/genai";
-import { parseReference, type ParsedReference } from "./verses";
+import { parseReference, type ParsedReference } from "./verses.js";
 
 // parseReference expects the whole string to be exactly "Book C:V". Free-form
 // user text ("what does john 3:16 say") needs the book name extracted first —

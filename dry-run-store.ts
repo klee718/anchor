@@ -4,7 +4,7 @@
 // Firestore) — this is the whole point of dry-run mode. State lives only
 // for the life of the dev server process; that's fine, it's a demo aid,
 // not a real persistence layer.
-import { XP_PER_LEVEL, type UserProfile } from "./progress-store";
+import { XP_PER_LEVEL, type UserProfile } from "./progress-store.js";
 
 const profiles = new Map<string, UserProfile>();
 

@@ -2,7 +2,7 @@
 // of src/store.ts's pure functions. The client never writes Firestore
 // directly; it calls /api/progress and /api/progress/complete, and the
 // server computes XP/streak/premium state here.
-import { getDb } from "./firebase-admin";
+import { getDb } from "./firebase-admin.js";
 
 export const XP_PER_LEVEL = 100;
 
