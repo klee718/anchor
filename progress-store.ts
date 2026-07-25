@@ -91,7 +91,7 @@ export async function completeLesson(uid: string, lessonId: string, xpReward: nu
   });
 }
 
-const FREE_CHAT_DAILY_LIMIT = 3;
+const FREE_CHAT_DAILY_LIMIT = 5;
 
 /**
  * Enforces the free-tier daily free-chat message cap. Premium users always

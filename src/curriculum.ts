@@ -389,12 +389,10 @@ export function getLessonById(id: string): Lesson | undefined {
 
 /**
  * Checks if a lesson requires a premium upgrade.
- * Units 1-5 (first 15 lessons) are free.
- * Units 6-10 require premium subscription.
+ * Paywall is disabled for now — all lessons are unlocked.
  */
-export function isLessonPremium(lessonId: string): boolean {
-  const premiumPrefixes = ["6-", "7-", "8-", "9-", "10-"];
-  return premiumPrefixes.some((p) => lessonId.startsWith(p));
+export function isLessonPremium(_lessonId: string): boolean {
+  return false;
 }
 
 export function isUnitUnlocked(unitId: number, completedLessons: string[]): boolean {

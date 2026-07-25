@@ -60,7 +60,7 @@ export function dryRunCompleteLesson(uid: string, lessonId: string, xpReward: nu
   return updated;
 }
 
-const FREE_CHAT_DAILY_LIMIT = 3;
+const FREE_CHAT_DAILY_LIMIT = 5;
 
 export function dryRunCheckAndIncrementFreeChat(uid: string): { allowed: boolean; remaining: number } {
   const profile = dryRunGetOrCreateProfile(uid);

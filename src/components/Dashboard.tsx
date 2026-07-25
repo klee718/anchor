@@ -106,7 +106,7 @@ export default function Dashboard({
                 <div>
                   <p className="font-semibold text-[#1C1209]">Free Conversation</p>
                   <p className="text-xs text-[#8C7B6B]">
-                    {progress.isPremium ? "Ask anything — unlimited" : "Ask anything — 3 messages/day on the free tier"}
+                    {progress.isPremium ? "Ask anything — unlimited" : "Ask anything — 5 messages/day on the free tier"}
                   </p>
                 </div>
               </div>
