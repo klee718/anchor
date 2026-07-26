@@ -46,6 +46,10 @@ function isVercelHosting(): boolean {
 
 export const app = express();
 
+// Vercel puts the app behind a proxy — without this, req.ip is the proxy's
+// address (always the same internal IP) instead of the real client IP.
+app.set("trust proxy", true);
+
 // Whitelist validator for V_HOSTING mode.
 function isWhitelistedUser(email: string, pass: string): boolean {
   const trimmedEmail = email.trim().toLowerCase();
