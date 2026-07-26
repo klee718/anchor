@@ -24,6 +24,14 @@ import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest, signToken }
 import { getOrCreateProfile, completeLesson, checkAndIncrementFreeChat, setPremiumStatus, findUidByStripeCustomerId } from "./progress-store.js";
 import { createCheckoutSession, constructWebhookEvent, interpretWebhookEvent, isStripeConfigured } from "./stripe-admin.js";
 import { dryRunGetOrCreateProfile, dryRunCompleteLesson, dryRunCheckAndIncrementFreeChat } from "./dry-run-store.js";
+import { recordLogin, getRecentLogins } from "./login-store.js";
+
+function adminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
 
 function isDryRun(): boolean {
   return process.env.DRY_RUN?.trim().toLowerCase() === "true";
@@ -195,9 +203,32 @@ app.post("/api/custom-login", async (req, res) => {
     // Generate our own local session token, completely bypassing Firebase Auth lookup
     const token = signToken({ email: trimmedEmail });
     res.json({ ok: true, token });
+    // Best-effort login audit — never let a logging failure affect the response.
+    recordLogin(trimmedEmail, req.ip ?? "unknown").catch((err) => {
+      console.error("Failed to record login event:", err);
+    });
   } catch (error: any) {
     console.error("Custom login failed:", error);
     res.status(500).json({ ok: false, error: error?.message || "Failed to authenticate." });
+  }
+});
+
+// --- Admin: Login Audit Log ---
+// Gated by ADMIN_EMAILS (comma-separated) rather than any role in the whitelist,
+// since users.txt has no concept of roles today.
+app.get("/api/admin/logins", requireAuth, async (req: AuthedRequest, res) => {
+  const requester = (req.uid || "").toLowerCase();
+  if (!adminEmails().includes(requester)) {
+    res.status(403).json({ ok: false, error: "forbidden" });
+    return;
+  }
+  try {
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const events = await getRecentLogins(limit);
+    res.json({ ok: true, events });
+  } catch (error: any) {
+    console.error("Failed to fetch login events:", error);
+    res.status(500).json({ ok: false, error: error?.message || "Failed to fetch login events." });
   }
 });
 

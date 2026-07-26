@@ -1,3 +1,5 @@
 .env
 .gstack/
 node_modules
+.vercel
+.env*

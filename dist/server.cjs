@@ -486,7 +486,7 @@ async function completeLesson(uid, lessonId, xpReward) {
     return updated;
   });
 }
-var FREE_CHAT_DAILY_LIMIT = 3;
+var FREE_CHAT_DAILY_LIMIT = 5;
 async function checkAndIncrementFreeChat(uid) {
   const db = getDb();
   const userRef = db.collection("users").doc(uid);
@@ -633,7 +633,7 @@ function dryRunCompleteLesson(uid, lessonId, xpReward) {
   profiles.set(uid, updated);
   return updated;
 }
-var FREE_CHAT_DAILY_LIMIT2 = 3;
+var FREE_CHAT_DAILY_LIMIT2 = 5;
 function dryRunCheckAndIncrementFreeChat(uid) {
   const profile = dryRunGetOrCreateProfile(uid);
   if (profile.isPremium) return { allowed: true, remaining: Infinity };
@@ -642,6 +642,30 @@ function dryRunCheckAndIncrementFreeChat(uid) {
   if (count >= FREE_CHAT_DAILY_LIMIT2) return { allowed: false, remaining: 0 };
   profiles.set(uid, { ...profile, freeChatCount: count + 1, freeChatDate: t });
   return { allowed: true, remaining: FREE_CHAT_DAILY_LIMIT2 - count - 1 };
+}
+
+// login-store.ts
+var import_redis = require("@upstash/redis");
+var client = null;
+function getRedis() {
+  if (!client) client = import_redis.Redis.fromEnv();
+  return client;
+}
+var RECENT_LOGINS_KEY = "login_events";
+var MAX_RECENT_LOGINS = 500;
+async function recordLogin(email, ip) {
+  const event = { email, ip, ts: (/* @__PURE__ */ new Date()).toISOString() };
+  const redis = getRedis();
+  await Promise.all([
+    redis.lpush(RECENT_LOGINS_KEY, event),
+    redis.ltrim(RECENT_LOGINS_KEY, 0, MAX_RECENT_LOGINS - 1),
+    redis.hset(`user_login:${email}`, { lastLogin: event.ts, lastIp: ip }),
+    redis.hincrby(`user_login:${email}`, "loginCount", 1)
+  ]);
+}
+async function getRecentLogins(limit = 100) {
+  const redis = getRedis();
+  return redis.lrange(RECENT_LOGINS_KEY, 0, limit - 1);
 }
 
 // server.ts
@@ -655,6 +679,9 @@ function getDirname2() {
   } catch {
   }
   return process.cwd();
+}
+function adminEmails() {
+  return (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
 }
 function isDryRun() {
   return process.env.DRY_RUN?.trim().toLowerCase() === "true";
@@ -783,9 +810,27 @@ app2.post("/api/custom-login", async (req, res) => {
   try {
     const token = signToken({ email: trimmedEmail });
     res.json({ ok: true, token });
+    recordLogin(trimmedEmail, req.ip ?? "unknown").catch((err) => {
+      console.error("Failed to record login event:", err);
+    });
   } catch (error) {
     console.error("Custom login failed:", error);
     res.status(500).json({ ok: false, error: error?.message || "Failed to authenticate." });
+  }
+});
+app2.get("/api/admin/logins", requireAuth, async (req, res) => {
+  const requester = (req.uid || "").toLowerCase();
+  if (!adminEmails().includes(requester)) {
+    res.status(403).json({ ok: false, error: "forbidden" });
+    return;
+  }
+  try {
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const events = await getRecentLogins(limit);
+    res.json({ ok: true, events });
+  } catch (error) {
+    console.error("Failed to fetch login events:", error);
+    res.status(500).json({ ok: false, error: error?.message || "Failed to fetch login events." });
   }
 });
 app2.get("/api/auth/preview-status", (req, res) => {
