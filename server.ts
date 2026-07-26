@@ -206,11 +206,18 @@ app.post("/api/custom-login", async (req, res) => {
   try {
     // Generate our own local session token, completely bypassing Firebase Auth lookup
     const token = signToken({ email: trimmedEmail });
-    res.json({ ok: true, token });
-    // Best-effort login audit — never let a logging failure affect the response.
-    recordLogin(trimmedEmail, req.ip ?? "unknown").catch((err) => {
+
+    // Awaited (not fire-and-forget) so the write finishes before the function
+    // may be frozen/torn down after the response is sent — Vercel's serverless
+    // runtime does not guarantee background work survives past res.json().
+    // A logging failure must never block login, so its own try/catch swallows errors.
+    try {
+      await recordLogin(trimmedEmail, req.ip ?? "unknown");
+    } catch (err) {
       console.error("Failed to record login event:", err);
-    });
+    }
+
+    res.json({ ok: true, token });
   } catch (error: any) {
     console.error("Custom login failed:", error);
     res.status(500).json({ ok: false, error: error?.message || "Failed to authenticate." });
