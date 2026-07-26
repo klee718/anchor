@@ -11,6 +11,7 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "build:bible-data": "node scripts/build-bible-data.mjs",
+    "check-logins": "node scripts/check-logins.mjs",
     "eval": "tsx evals/run.ts",
     "eval:dry-run": "tsx evals/dry-run.ts"
   },

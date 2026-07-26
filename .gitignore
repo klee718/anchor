@@ -3,3 +3,4 @@
 node_modules
 .vercel
 .env*
+scripts/check-logins.mjs
