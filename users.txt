@@ -2,6 +2,10 @@
 # Format: email:password (one per line)
 # Lines starting with # are ignored.
 
+
+lisal@anchor.com:anchor2026
+chrisl@anchor.com:anchor2026
+doral@anchor.com:anchor2026
 daniel@anchor.com:anchor2026
 roger@anchor.com:anchor2026
 yudan@anchor.com:anchor2026
