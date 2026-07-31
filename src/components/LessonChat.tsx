@@ -25,12 +25,19 @@ export default function LessonChat({ lesson, dryRun, onComplete, onBack, onPaywa
   const [exchanges, setExchanges] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const didSeedRef = useRef(false);
+  const didPlayEnterSoundRef = useRef(false);
 
   const isFreeChat = lesson.id === "free";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (didPlayEnterSoundRef.current) return;
+    didPlayEnterSoundRef.current = true;
+    playSound("enter");
+  }, []);
 
   useEffect(() => {
     if (didSeedRef.current) return;
