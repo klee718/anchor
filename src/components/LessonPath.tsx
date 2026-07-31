@@ -142,31 +142,59 @@ function GoldProgressPath({
 }) {
   const pathRef = useRef<SVGPathElement>(null);
   const [dash, setDash] = useState<{ length: number; offset: number } | null>(null);
+  const [flowPathD, setFlowPathD] = useState("");
 
   useLayoutEffect(() => {
     const el = pathRef.current;
     if (!el) return;
     const length = el.getTotalLength();
     setDash({ length, offset: length * (1 - fraction) });
-  }, [d, fraction]);
+
+    if (fraction > 0 && !reducedMotion) {
+      const filledLength = length * fraction;
+      const sampleCount = 24;
+      const segments: string[] = [];
+      for (let i = 0; i <= sampleCount; i++) {
+        const pt = el.getPointAtLength((filledLength * i) / sampleCount);
+        segments.push(i === 0 ? `M ${pt.x} ${pt.y}` : `L ${pt.x} ${pt.y}`);
+      }
+      setFlowPathD(segments.join(" "));
+    } else {
+      setFlowPathD("");
+    }
+  }, [d, fraction, reducedMotion]);
 
   return (
-    <path
-      ref={pathRef}
-      d={d}
-      fill="none"
-      stroke={`url(#${gradientId})`}
-      strokeWidth={3}
-      strokeLinecap="round"
-      style={
-        dash
-          ? {
-              strokeDasharray: dash.length,
-              strokeDashoffset: dash.offset,
-              transition: reducedMotion ? "none" : "stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1)",
-            }
-          : undefined
-      }
-    />
+    <>
+      <path
+        ref={pathRef}
+        d={d}
+        fill="none"
+        stroke={`url(#${gradientId})`}
+        strokeWidth={3}
+        strokeLinecap="round"
+        style={
+          dash
+            ? {
+                strokeDasharray: dash.length,
+                strokeDashoffset: dash.offset,
+                transition: reducedMotion ? "none" : "stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1)",
+              }
+            : undefined
+        }
+      />
+      {/* Small lights drifting along the earned portion of the path — the fill
+          above is a one-time reveal, this is what keeps it feeling alive. */}
+      {flowPathD && (
+        <>
+          <circle r={2.6} fill="#FFF3D6">
+            <animateMotion dur="2.6s" repeatCount="indefinite" path={flowPathD} />
+          </circle>
+          <circle r={2} fill="#FFF3D6" opacity={0.6}>
+            <animateMotion dur="2.6s" repeatCount="indefinite" path={flowPathD} begin="-1.3s" />
+          </circle>
+        </>
+      )}
+    </>
   );
 }

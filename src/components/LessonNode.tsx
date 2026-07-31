@@ -57,7 +57,10 @@ export default function LessonNode({ lesson, status, onClick, disabled, justUnlo
     >
       <span className={bursting ? "inline-block animate-unlock-icon-pop" : undefined}>{statusIcon[status]}</span>
       {status === "available" && (
-        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[#C8A261] animate-pulse" />
+        <>
+          <span className="pointer-events-none absolute inset-0 rounded-full ring-4 ring-amber-400/50 animate-ping motion-reduce:hidden" />
+          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[#C8A261] animate-pulse motion-reduce:animate-none" />
+        </>
       )}
       {bursting && (
         <span className="pointer-events-none absolute inset-0" aria-hidden="true">
