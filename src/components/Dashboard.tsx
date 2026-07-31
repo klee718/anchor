@@ -2,6 +2,7 @@ import type { AnchorProgress } from "../store";
 import { xpInCurrentLevel } from "../store";
 import { CURRICULUM, isUnitUnlocked, isLessonUnlocked, isLessonPremium, type Lesson } from "../curriculum";
 import LessonNode from "./LessonNode";
+import ParchmentBackground from "./ParchmentBackground";
 
 const DAILY_VERSES = [
   { ref: "Psalms 46:10", label: "Be still, and know that I am God" },
@@ -48,9 +49,11 @@ export default function Dashboard({
   };
 
   return (
-    <div className="flex h-screen flex-col bg-[#EDE8E0] font-sans text-[#1C1209]">
+    <div className="relative h-screen overflow-hidden bg-[#EDE8E0] font-sans text-[#1C1209]">
+      <ParchmentBackground />
+      <div className="relative z-10 flex h-full flex-col">
       {/* Top Bar */}
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[#D9D0C4] bg-[#EDE8E0]/95 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[#D9D0C4] bg-[#EDE8E0]/80 px-4 py-3 backdrop-blur">
         <h1 className="font-serif text-2xl font-semibold text-[#1C1209] tracking-tight">Anchor</h1>
         <div className="flex items-center gap-4">
           <span className="text-sm font-semibold text-[#C8A261]" title="Streak">
@@ -208,6 +211,7 @@ export default function Dashboard({
           </footer>
         </div>
       </main>
+      </div>
     </div>
   );
 }
