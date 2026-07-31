@@ -32,7 +32,7 @@ export default function ParchmentBackground() {
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isSmallScreen = window.innerWidth < 768;
-    const particleCount = reducedMotion ? 0 : isSmallScreen ? 22 : 55;
+    const particleCount = reducedMotion ? 0 : isSmallScreen ? 32 : 75;
 
     let width = 0;
     let height = 0;
@@ -53,9 +53,9 @@ export default function ParchmentBackground() {
     const particles: Particle[] = Array.from({ length: particleCount }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      r: Math.random() * 1.6 + 0.4,
-      baseOpacity: Math.random() * 0.25 + 0.1,
-      speed: Math.random() * 0.15 + 0.04,
+      r: Math.random() * 2 + 0.6,
+      baseOpacity: Math.random() * 0.35 + 0.2,
+      speed: Math.random() * 0.4 + 0.15,
       driftPhase: Math.random() * Math.PI * 2,
       driftSpeed: Math.random() * 0.4 + 0.15,
     }));
@@ -75,12 +75,12 @@ export default function ParchmentBackground() {
       ctx!.fillStyle = base;
       ctx!.fillRect(0, 0, width, height);
 
-      const glowX = width * (0.78 + Math.sin(time * 0.00012) * 0.05);
-      const glowY = height * (0.16 + Math.cos(time * 0.00009) * 0.03);
-      const glowRadius = Math.max(width, height) * 0.55;
+      const glowX = width * (0.78 + Math.sin(time * 0.00035) * 0.09);
+      const glowY = height * (0.16 + Math.cos(time * 0.00028) * 0.06);
+      const glowRadius = Math.max(width, height) * (0.55 + Math.sin(time * 0.0004) * 0.05);
       const glow = ctx!.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowRadius);
-      glow.addColorStop(0, `rgba(${CREAM_RGB},0.22)`);
-      glow.addColorStop(0.4, `rgba(${GOLD_RGB},0.1)`);
+      glow.addColorStop(0, `rgba(${CREAM_RGB},0.3)`);
+      glow.addColorStop(0.4, `rgba(${GOLD_RGB},0.15)`);
       glow.addColorStop(1, "rgba(227,220,206,0)");
       ctx!.fillStyle = glow;
       ctx!.fillRect(0, 0, width, height);
@@ -88,9 +88,9 @@ export default function ParchmentBackground() {
       if (!reducedMotion) {
         ctx!.save();
         for (const p of particles) {
-          p.y -= p.speed * (dt * 0.05);
-          p.driftPhase += p.driftSpeed * dt * 0.001;
-          p.x += Math.sin(p.driftPhase) * 0.25;
+          p.y -= p.speed * (dt * 0.09);
+          p.driftPhase += p.driftSpeed * dt * 0.0018;
+          p.x += Math.sin(p.driftPhase) * 0.4;
 
           if (p.y < -10) {
             p.y = height + 10;
@@ -99,7 +99,7 @@ export default function ParchmentBackground() {
           if (p.x < -10) p.x = width + 10;
           if (p.x > width + 10) p.x = -10;
 
-          const twinkle = 0.75 + 0.25 * Math.sin(time * 0.0015 + p.driftPhase);
+          const twinkle = 0.65 + 0.35 * Math.sin(time * 0.0025 + p.driftPhase);
           ctx!.beginPath();
           ctx!.fillStyle = `rgba(${GOLD_RGB},${p.baseOpacity * twinkle})`;
           ctx!.arc(p.x, p.y, p.r, 0, Math.PI * 2);
