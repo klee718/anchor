@@ -690,6 +690,7 @@ function isVercelHosting() {
   return process.env.V_HOSTING?.trim().toLowerCase() === "true" || process.env.V_HOSTING?.trim().toLowerCase() === "true";
 }
 var app2 = (0, import_express.default)();
+app2.set("trust proxy", true);
 function isWhitelistedUser(email, pass) {
   const trimmedEmail = email.trim().toLowerCase();
   const trimmedPass = pass.trim();
@@ -768,7 +769,7 @@ app2.post("/api/stripe/webhook", import_express.default.raw({ type: "application
 });
 app2.use(import_express.default.json());
 app2.use((req, _res, next) => {
-  if (req.url && !req.url.startsWith("/api") && req.url !== "/") {
+  if (process.env.VERCEL && req.url && !req.url.startsWith("/api") && req.url !== "/") {
     req.url = "/api" + (req.url.startsWith("/") ? req.url : "/" + req.url);
   }
   next();
@@ -809,10 +810,12 @@ app2.post("/api/custom-login", async (req, res) => {
   }
   try {
     const token = signToken({ email: trimmedEmail });
-    res.json({ ok: true, token });
-    recordLogin(trimmedEmail, req.ip ?? "unknown").catch((err) => {
+    try {
+      await recordLogin(trimmedEmail, req.ip ?? "unknown");
+    } catch (err) {
       console.error("Failed to record login event:", err);
-    });
+    }
+    res.json({ ok: true, token });
   } catch (error) {
     console.error("Custom login failed:", error);
     res.status(500).json({ ok: false, error: error?.message || "Failed to authenticate." });
@@ -997,6 +1000,16 @@ async function startServer() {
       res.sendFile(import_path2.default.join(distPath, "index.html"));
     });
   }
+  app2.use((_req, res) => {
+    res.status(404).json({ ok: false, error: "API endpoint not found." });
+  });
+  app2.use((err, _req, res, _next) => {
+    console.error("Server error caught by global handler:", err);
+    res.status(500).json({
+      ok: false,
+      error: err?.message || "Internal server error."
+    });
+  });
   if (!process.env.VERCEL) {
     app2.listen(PORT, "0.0.0.0", () => {
       const hasKey = Boolean(process.env.GEMINI_API_KEY);
@@ -1015,16 +1028,6 @@ async function startServer() {
     });
   }
 }
-app2.use((_req, res) => {
-  res.status(404).json({ ok: false, error: "API endpoint not found." });
-});
-app2.use((err, _req, res, _next) => {
-  console.error("Server error caught by global handler:", err);
-  res.status(500).json({
-    ok: false,
-    error: err?.message || "Internal server error."
-  });
-});
 startServer();
 var server_default = app2;
 // Annotate the CommonJS export names for ESM import in node:

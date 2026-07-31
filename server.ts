@@ -149,9 +149,13 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
 app.use(express.json());
 
-// URL normalizer for Vercel serverless rewrites: ensures req.url always has /api prefix
+// URL normalizer for Vercel serverless rewrites: ensures req.url always has /api prefix.
+// Scoped to process.env.VERCEL only — Vercel's rewrite to api/index.ts can strip the
+// /api prefix before this function sees the request. Outside Vercel, this app also
+// serves the Vite dev middleware / static build for every non-API path, so rewriting
+// those to /api/* would 404 every asset, module script, and page other than "/".
 app.use((req, _res, next) => {
-  if (req.url && !req.url.startsWith("/api") && req.url !== "/") {
+  if (process.env.VERCEL && req.url && !req.url.startsWith("/api") && req.url !== "/") {
     req.url = "/api" + (req.url.startsWith("/") ? req.url : "/" + req.url);
   }
   next();
@@ -431,6 +435,24 @@ async function startServer() {
     });
   }
 
+  // These must be registered after the Vite/static middleware above — Express
+  // matches middleware in registration order, and the Vite setup is awaited,
+  // so registering these at module scope (outside this async function) could
+  // land them ahead of Vite's middleware in the stack, 404-ing every page.
+  // Fallback 404 Handler for API routes: Ensure all unmatched API calls return JSON instead of HTML
+  app.use((_req, res) => {
+    res.status(404).json({ ok: false, error: "API endpoint not found." });
+  });
+
+  // Global Express Error Handler: Guarantee all server errors return JSON instead of HTML
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error("Server error caught by global handler:", err);
+    res.status(500).json({
+      ok: false,
+      error: err?.message || "Internal server error.",
+    });
+  });
+
   if (!process.env.VERCEL) {
     app.listen(PORT, "0.0.0.0", () => {
       const hasKey = Boolean(process.env.GEMINI_API_KEY);
@@ -449,20 +471,6 @@ async function startServer() {
     });
   }
 }
-
-// Fallback 404 Handler for API routes: Ensure all unmatched API calls return JSON instead of HTML
-app.use((_req, res) => {
-  res.status(404).json({ ok: false, error: "API endpoint not found." });
-});
-
-// Global Express Error Handler: Guarantee all server errors return JSON instead of HTML
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error("Server error caught by global handler:", err);
-  res.status(500).json({
-    ok: false,
-    error: err?.message || "Internal server error.",
-  });
-});
 
 startServer();
 

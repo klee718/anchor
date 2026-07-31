@@ -63,6 +63,13 @@ h1, h2, h3, .font-serif {
   box-shadow: 0 0 0 3px #C8A26130, 0 4px 12px #C8A26120;
 }
 
+/* Ambient golden glow pulse on the login card (AuthScreen) */
+@keyframes card-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 22px rgba(212, 175, 55, 0.25)); }
+  50%       { filter: drop-shadow(0 0 34px rgba(212, 175, 55, 0.45)); }
+}
+.animate-card-glow { animation: card-glow-pulse 4s ease-in-out infinite; }
+
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
