@@ -1,4 +1,5 @@
 import { useRef, type MouseEvent, type ReactNode } from "react";
+import { playSound } from "../sound";
 
 interface Props {
   children: ReactNode;
@@ -30,10 +31,15 @@ export default function TiltCard({ children, className = "", onClick, maxTilt = 
     if (ref.current) ref.current.style.transform = "";
   }
 
+  function handleClick() {
+    playSound("tap");
+    onClick?.();
+  }
+
   return (
     <button
       ref={ref}
-      onClick={onClick}
+      onClick={handleClick}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className={`transition-transform duration-200 ease-out will-change-transform motion-reduce:transition-none ${className}`}

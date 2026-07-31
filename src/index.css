@@ -70,13 +70,39 @@ h1, h2, h3, .font-serif {
 }
 .animate-card-glow { animation: card-glow-pulse 4s ease-in-out infinite; }
 
+/* Lock-dissolve burst: gold motes flying outward from an unlocked lesson node */
+@keyframes unlock-particle {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.3); }
+}
+.animate-unlock-particle { animation: unlock-particle 650ms ease-out forwards; }
+
+/* Icon pop when a lesson node's status flips (lock -> play) */
+@keyframes unlock-icon-pop {
+  0%   { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+  60%  { transform: scale(1.25) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.animate-unlock-icon-pop { animation: unlock-icon-pop 450ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+/* Sparkle emitter around the Daily Challenge card border */
+@keyframes sparkle-pop {
+  0%   { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  35%  { opacity: 1; transform: scale(1.1) rotate(45deg); }
+  100% { opacity: 0; transform: scale(0.4) rotate(90deg); }
+}
+.animate-sparkle-pop { animation: sparkle-pop 700ms ease-out forwards; }
+
 @media (prefers-reduced-motion: reduce) {
   .animate-xp-fly,
   .animate-streak-pulse,
   .animate-card-pop,
   .animate-xp-bar,
   .xp-bar-shimmer,
-  .animate-card-glow {
+  .animate-card-glow,
+  .animate-unlock-particle,
+  .animate-unlock-icon-pop,
+  .animate-sparkle-pop {
     animation: none !important;
   }
 }

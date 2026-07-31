@@ -11,6 +11,7 @@ export interface LessonPathItem {
 interface Props {
   items: LessonPathItem[];
   onSelect: (item: LessonPathItem) => void;
+  justUnlockedLessonId?: string | null;
 }
 
 interface Point {
@@ -33,7 +34,7 @@ function buildPathD(points: Point[]): string {
  * nodes. The gold overlay fills up through completed lessons via the classic
  * stroke-dasharray/dashoffset "progress ring" trick.
  */
-export default function LessonPath({ items, onSelect }: Props) {
+export default function LessonPath({ items, onSelect, justUnlockedLessonId }: Props) {
   const gradientId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -104,6 +105,7 @@ export default function LessonPath({ items, onSelect }: Props) {
                   status={item.status}
                   disabled={item.status === "locked" && !item.isPremiumLesson}
                   onClick={() => onSelect(item)}
+                  justUnlocked={item.lesson.id === justUnlockedLessonId && item.status !== "locked"}
                 />
               </div>
               <div className={`flex flex-col ${isEven ? "items-start" : "items-end"}`}>

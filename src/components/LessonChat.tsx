@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { Lesson } from "../curriculum";
 import { getIdToken } from "../firebase";
+import { playSound } from "../sound";
 import ParchmentBackground from "./ParchmentBackground";
 
 interface DisplayMessage {
@@ -129,7 +130,14 @@ export default function LessonChat({ lesson, dryRun, onComplete, onBack, onPaywa
       <div className="relative z-10 flex h-full flex-col">
       {/* Header */}
       <header className="flex items-center gap-3 border-b border-[#D9D0C4] bg-[#F2EDE5]/85 backdrop-blur px-4 py-3">
-        <button onClick={onBack} className="text-[#8C7B6B] hover:text-[#1C1209] transition text-xl font-bold px-1" title="Go back to Dashboard">
+        <button
+          onClick={() => {
+            playSound("tap");
+            onBack();
+          }}
+          className="text-[#8C7B6B] hover:text-[#1C1209] transition text-xl font-bold px-1"
+          title="Go back to Dashboard"
+        >
           ←
         </button>
         <div className="flex-1">
@@ -199,7 +207,10 @@ export default function LessonChat({ lesson, dryRun, onComplete, onBack, onPaywa
           <button
             className="rounded-xl bg-[#1C1209] px-4 py-2 text-sm font-bold text-white shadow-[0_3px_0_#0a0704] disabled:opacity-40 transition active:translate-y-0.5 active:shadow-none cursor-pointer"
             disabled={loading || !input.trim()}
-            onClick={() => sendText(input)}
+            onClick={() => {
+              playSound("tap");
+              sendText(input);
+            }}
           >
             Send
           </button>

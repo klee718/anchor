@@ -1,9 +1,12 @@
+import { useRef, useState } from "react";
 import type { AnchorProgress } from "../store";
 import { xpInCurrentLevel } from "../store";
 import { CURRICULUM, isUnitUnlocked, isLessonUnlocked, isLessonPremium, type Lesson } from "../curriculum";
+import { useSound } from "../useSound";
 import ParchmentBackground from "./ParchmentBackground";
 import TiltCard from "./TiltCard";
 import LessonPath, { type LessonPathItem } from "./LessonPath";
+import SparkleBurst from "./SparkleBurst";
 
 const DAILY_VERSES = [
   { ref: "Psalms 46:10", label: "Be still, and know that I am God" },
@@ -28,6 +31,7 @@ interface Props {
   onPremiumLocked: () => void;
   onLogout: () => void;
   showLogout: boolean;
+  justUnlockedLessonId?: string | null;
 }
 
 export default function Dashboard({
@@ -38,9 +42,19 @@ export default function Dashboard({
   onPremiumLocked,
   onLogout,
   showLogout = true,
+  justUnlockedLessonId,
 }: Props) {
   const currentXP = xpInCurrentLevel(progress);
   const percent = Math.min(100, Math.floor((currentXP / 100) * 100));
+  const { enabled: soundEnabled, toggle: toggleSound } = useSound();
+  const [sparkling, setSparkling] = useState(false);
+  const sparkleTimeoutRef = useRef<number | null>(null);
+
+  function triggerSparkle() {
+    setSparkling(true);
+    if (sparkleTimeoutRef.current) window.clearTimeout(sparkleTimeoutRef.current);
+    sparkleTimeoutRef.current = window.setTimeout(() => setSparkling(false), 750);
+  }
 
   const dayIdx = Math.floor(Date.now() / 86400000) % DAILY_VERSES.length;
   const dailyRef = DAILY_VERSES[dayIdx];
@@ -69,6 +83,13 @@ export default function Dashboard({
               />
             </div>
           </div>
+          <button
+            onClick={toggleSound}
+            title={soundEnabled ? "Mute sound" : "Enable sound"}
+            className="rounded-lg border border-[#D9D0C4] bg-[#FAF7F2] px-2.5 py-1 text-xs font-medium text-[#8C7B6B] transition hover:bg-[#F2EDE5] hover:text-[#1C1209]"
+          >
+            {soundEnabled ? "🔊" : "🔇"}
+          </button>
           {showLogout && (
             <button
               onClick={onLogout}
@@ -85,18 +106,24 @@ export default function Dashboard({
           {/* Daily Challenge */}
           <section className="mb-8 animate-card-pop" style={{ animationDelay: "0ms" }}>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#C8A261]">Daily Challenge</h2>
-            <TiltCard
-              onClick={onDailyChallenge}
-              className="w-full rounded-2xl border border-[#D9D0C4]/70 border-l-4 border-l-[#C8A261] bg-white/70 p-4 text-left shadow-lg shadow-[#8a6d1a]/5 backdrop-blur-md hover:bg-white/85 active:scale-[0.99]"
-            >
-              <div className="mb-2 flex items-center gap-2">
-                <span className="text-xl">⭐</span>
-                <span className="text-sm font-semibold text-[#C8A261]">Today's Verse</span>
-                <span className="ml-auto rounded-full bg-[#C8A26118] px-2 py-0.5 text-xs font-bold text-[#C8A261]">+10 XP</span>
-              </div>
-              <p className="text-sm font-semibold text-[#1C1209]">{daily.ref}</p>
-              <p className="mt-1 text-xs italic text-[#4A3728]">"{daily.label}"</p>
-            </TiltCard>
+            <div className="relative" onMouseEnter={triggerSparkle}>
+              <TiltCard
+                onClick={() => {
+                  triggerSparkle();
+                  onDailyChallenge();
+                }}
+                className="w-full rounded-2xl border border-[#D9D0C4]/70 border-l-4 border-l-[#C8A261] bg-white/70 p-4 text-left shadow-lg shadow-[#8a6d1a]/5 backdrop-blur-md hover:bg-white/85 active:scale-[0.99]"
+              >
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="text-xl">⭐</span>
+                  <span className="text-sm font-semibold text-[#C8A261]">Today's Verse</span>
+                  <span className="ml-auto rounded-full bg-[#C8A26118] px-2 py-0.5 text-xs font-bold text-[#C8A261]">+10 XP</span>
+                </div>
+                <p className="text-sm font-semibold text-[#1C1209]">{daily.ref}</p>
+                <p className="mt-1 text-xs italic text-[#4A3728]">"{daily.label}"</p>
+              </TiltCard>
+              <SparkleBurst active={sparkling} />
+            </div>
           </section>
 
           {/* Free Chat */}
@@ -170,6 +197,7 @@ export default function Dashboard({
                   <div className="bg-[#F2EDE5]/85 backdrop-blur-sm px-4 py-6">
                     <LessonPath
                       items={pathItems}
+                      justUnlockedLessonId={justUnlockedLessonId}
                       onSelect={(item) => {
                         if (item.isPremiumLesson) {
                           onPremiumLocked();

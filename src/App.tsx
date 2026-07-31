@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchProgress, completeLessonRemote, type AnchorProgress } from "./store";
-import type { Lesson } from "./curriculum";
+import { getNextLessonId, type Lesson } from "./curriculum";
 import { onAuthStateChanged, signOut, type User } from "./firebase";
+import { playSound } from "./sound";
 import Dashboard from "./components/Dashboard";
 import LessonChat from "./components/LessonChat";
 import XPToast from "./components/XPToast";
@@ -43,6 +44,7 @@ export default function App() {
   const [progress, setProgress] = useState<AnchorProgress | null>(null);
   const [view, setView] = useState<View>({ screen: "dashboard" });
   const [xpToast, setXpToast] = useState<number | null>(null);
+  const [justUnlockedLessonId, setJustUnlockedLessonId] = useState<string | null>(null);
   const [paywallReason, setPaywallReason] = useState<"locked_unit" | "free_chat_limit" | null>(null);
   const [checkoutStatus, setCheckoutStatus] = useState<"success" | "cancelled" | null>(null);
 
@@ -115,6 +117,16 @@ export default function App() {
       const updated = await completeLessonRemote(lessonId, xpReward);
       setProgress(updated);
       setXpToast(xpReward);
+      if (lessonId.startsWith("daily-")) {
+        playSound("chime");
+      } else {
+        playSound("unlock");
+        const nextId = getNextLessonId(lessonId);
+        if (nextId) {
+          setJustUnlockedLessonId(nextId);
+          setTimeout(() => setJustUnlockedLessonId(null), 1500);
+        }
+      }
     } catch (err) {
       console.error("Failed to complete lesson:", err);
     }
@@ -215,6 +227,7 @@ export default function App() {
         onDailyChallenge={handleDailyChallenge}
         onPremiumLocked={() => setPaywallReason("locked_unit")}
         onLogout={handleLogout}
+        justUnlockedLessonId={justUnlockedLessonId}
         showLogout={true}
       />
       {xpToast !== null && <XPToast amount={xpToast} onDone={() => setXpToast(null)} />}

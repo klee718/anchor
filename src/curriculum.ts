@@ -402,6 +402,19 @@ export function isUnitUnlocked(unitId: number, completedLessons: string[]): bool
   return prevUnit.lessons.every((l) => completedLessons.includes(l.id));
 }
 
+/** The lesson that becomes reachable immediately after completing `lessonId` — the next lesson in the same unit, or the first lesson of the next unit. Used to target the unlock celebration at the right node. */
+export function getNextLessonId(lessonId: string): string | null {
+  for (let u = 0; u < CURRICULUM.length; u++) {
+    const unit = CURRICULUM[u];
+    const idx = unit.lessons.findIndex((l) => l.id === lessonId);
+    if (idx === -1) continue;
+    if (idx + 1 < unit.lessons.length) return unit.lessons[idx + 1].id;
+    const nextUnit = CURRICULUM[u + 1];
+    return nextUnit ? nextUnit.lessons[0].id : null;
+  }
+  return null;
+}
+
 export function isLessonUnlocked(lesson: Lesson, unitId: number, completedLessons: string[]): boolean {
   const unit = CURRICULUM.find((u) => u.id === unitId);
   if (!unit) return false;
