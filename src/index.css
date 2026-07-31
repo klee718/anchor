@@ -70,6 +70,17 @@ h1, h2, h3, .font-serif {
 }
 .animate-card-glow { animation: card-glow-pulse 4s ease-in-out infinite; }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-xp-fly,
+  .animate-streak-pulse,
+  .animate-card-pop,
+  .animate-xp-bar,
+  .xp-bar-shimmer,
+  .animate-card-glow {
+    animation: none !important;
+  }
+}
+
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

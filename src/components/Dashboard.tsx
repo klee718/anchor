@@ -1,8 +1,9 @@
 import type { AnchorProgress } from "../store";
 import { xpInCurrentLevel } from "../store";
 import { CURRICULUM, isUnitUnlocked, isLessonUnlocked, isLessonPremium, type Lesson } from "../curriculum";
-import LessonNode from "./LessonNode";
 import ParchmentBackground from "./ParchmentBackground";
+import TiltCard from "./TiltCard";
+import LessonPath, { type LessonPathItem } from "./LessonPath";
 
 const DAILY_VERSES = [
   { ref: "Psalms 46:10", label: "Be still, and know that I am God" },
@@ -82,11 +83,11 @@ export default function Dashboard({
       <main className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto max-w-2xl">
           {/* Daily Challenge */}
-          <section className="mb-8">
+          <section className="mb-8 animate-card-pop" style={{ animationDelay: "0ms" }}>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#C8A261]">Daily Challenge</h2>
-            <button
+            <TiltCard
               onClick={onDailyChallenge}
-              className="w-full rounded-2xl border border-[#D9D0C4] border-l-4 border-l-[#C8A261] bg-[#FAF7F2] p-4 text-left shadow-sm transition hover:bg-[#F2EDE5] active:scale-[0.99]"
+              className="w-full rounded-2xl border border-[#D9D0C4]/70 border-l-4 border-l-[#C8A261] bg-white/70 p-4 text-left shadow-lg shadow-[#8a6d1a]/5 backdrop-blur-md hover:bg-white/85 active:scale-[0.99]"
             >
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-xl">⭐</span>
@@ -95,14 +96,14 @@ export default function Dashboard({
               </div>
               <p className="text-sm font-semibold text-[#1C1209]">{daily.ref}</p>
               <p className="mt-1 text-xs italic text-[#4A3728]">"{daily.label}"</p>
-            </button>
+            </TiltCard>
           </section>
 
           {/* Free Chat */}
-          <section className="mb-8">
-            <button
+          <section className="mb-8 animate-card-pop" style={{ animationDelay: "60ms" }}>
+            <TiltCard
               onClick={onOpenFreeChat}
-              className="w-full rounded-2xl border border-[#D9D0C4] bg-[#FAF7F2] p-4 text-left shadow-sm transition hover:bg-[#F2EDE5] active:scale-[0.99]"
+              className="w-full rounded-2xl border border-[#D9D0C4]/70 bg-white/70 p-4 text-left shadow-lg shadow-[#8a6d1a]/5 backdrop-blur-md hover:bg-white/85 active:scale-[0.99]"
             >
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EDE8E0] text-xl">💬</span>
@@ -113,26 +114,39 @@ export default function Dashboard({
                   </p>
                 </div>
               </div>
-            </button>
+            </TiltCard>
           </section>
 
           {/* Course Map */}
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-[#C8A261]">Course</h2>
           <div className="flex flex-col gap-8">
-            {CURRICULUM.map((unit) => {
+            {CURRICULUM.map((unit, unitIdx) => {
               const progressionUnlocked = isUnitUnlocked(unit.id, progress.completedLessons);
               const allDone = unit.lessons.every((l) => progress.completedLessons.includes(l.id));
-              
+
               // Unit is premium-gated only if ALL lessons in it are premium.
               // This keeps Unit 2 unlocked for the first 2 free lessons.
               const isEntireUnitPremium = unit.lessons.every((l) => isLessonPremium(l.id));
               const premiumGated = isEntireUnitPremium && !progress.isPremium;
               const unlocked = progressionUnlocked && !premiumGated;
 
+              const pathItems: LessonPathItem[] = unit.lessons.map((lesson) => {
+                const done = progress.completedLessons.includes(lesson.id);
+                const isPremiumLesson = isLessonPremium(lesson.id) && !progress.isPremium;
+                const progressionAvailable = isLessonUnlocked(lesson, unit.id, progress.completedLessons);
+                const avail = !done && !isPremiumLesson && progressionAvailable;
+                return { lesson, isPremiumLesson, status: done ? "completed" : avail ? "available" : "locked" };
+              });
+
               return (
-                <div key={unit.id} className={`rounded-2xl border border-[#D9D0C4] overflow-hidden shadow-sm animate-card-pop ${!unlocked ? "opacity-55" : ""}`}>
+                <div
+                  key={unit.id}
+                  className={`rounded-2xl border border-[#D9D0C4]/80 overflow-hidden shadow-lg shadow-[#8a6d1a]/5 animate-card-pop ${!unlocked ? "opacity-55" : ""}`}
+                  style={{ animationDelay: `${120 + unitIdx * 70}ms` }}
+                >
                   {/* Unit Header */}
-                  <button
+                  <TiltCard
+                    maxTilt={3}
                     onClick={() => premiumGated && onPremiumLocked()}
                     className={`${unit.color} px-4 py-4 flex w-full items-center justify-between text-white text-left ${premiumGated ? "cursor-pointer" : "cursor-default"}`}
                   >
@@ -150,55 +164,20 @@ export default function Dashboard({
                       <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs font-bold text-white">✦ Premium</span>
                     )}
                     {!unlocked && !premiumGated && <span className="text-white/60 text-lg">🔒</span>}
-                  </button>
+                  </TiltCard>
 
-                  {/* Lesson Nodes list */}
-                  <div className="bg-[#F2EDE5] px-4 py-6">
-                    <div className="flex flex-col items-center gap-6">
-                      {unit.lessons.map((lesson, idx) => {
-                        const done = progress.completedLessons.includes(lesson.id);
-                        const isPremiumLesson = isLessonPremium(lesson.id) && !progress.isPremium;
-                        const progressionAvailable = isLessonUnlocked(lesson, unit.id, progress.completedLessons);
-                        
-                        // Available only if progression allows it AND it isn't premium-gated
-                        const avail = !done && !isPremiumLesson && progressionAvailable;
-                        const status = done ? "completed" : avail ? "available" : "locked";
-                        const isEven = idx % 2 === 0;
-
-                        return (
-                          <div key={lesson.id} className={`flex w-full items-center gap-4 ${isEven ? "justify-start pl-8" : "justify-end pr-8"}`}>
-                            <div className={`flex flex-col ${isEven ? "items-start" : "items-end"} gap-1.5`}>
-                              <LessonNode
-                                lesson={lesson}
-                                status={status}
-                                // If locked because of premium, keep disabled=false so user can click to trigger the paywall modal
-                                disabled={status === "locked" && !isPremiumLesson}
-                                onClick={() => {
-                                  if (isPremiumLesson) {
-                                    onPremiumLocked();
-                                    return;
-                                  }
-                                  if (status !== "locked") onStartLesson(lesson);
-                                }}
-                              />
-                              <div className={`flex flex-col ${isEven ? "items-start" : "items-end"}`}>
-                                <div className="flex items-center gap-1">
-                                  <p className="max-w-[150px] text-xs font-medium text-[#8C7B6B] leading-tight text-center md:text-left">
-                                    {lesson.title}
-                                  </p>
-                                  {isPremiumLesson && (
-                                    <span className="text-[9px] font-bold text-[#C8A261] px-1 bg-[#C8A261]/10 rounded" title="Premium">
-                                      ✦
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[10px] font-bold text-[#C8A261] mt-0.5">{lesson.xpReward} XP</p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  {/* Lesson Path */}
+                  <div className="bg-[#F2EDE5]/85 backdrop-blur-sm px-4 py-6">
+                    <LessonPath
+                      items={pathItems}
+                      onSelect={(item) => {
+                        if (item.isPremiumLesson) {
+                          onPremiumLocked();
+                          return;
+                        }
+                        if (item.status !== "locked") onStartLesson(item.lesson);
+                      }}
+                    />
                   </div>
                 </div>
               );
