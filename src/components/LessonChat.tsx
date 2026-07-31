@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { Lesson } from "../curriculum";
 import { getIdToken } from "../firebase";
+import ParchmentBackground from "./ParchmentBackground";
 
 interface DisplayMessage {
   kind: "user" | "assistant" | "error";
@@ -123,9 +124,11 @@ export default function LessonChat({ lesson, dryRun, onComplete, onBack, onPaywa
   const canComplete = exchanges >= 2 && !loading;
 
   return (
-    <div className="flex h-screen flex-col bg-[#EDE8E0] text-[#1C1209]">
+    <div className="relative h-screen overflow-hidden bg-[#EDE8E0] text-[#1C1209]">
+      <ParchmentBackground />
+      <div className="relative z-10 flex h-full flex-col">
       {/* Header */}
-      <header className="flex items-center gap-3 border-b border-[#D9D0C4] bg-[#F2EDE5] px-4 py-3">
+      <header className="flex items-center gap-3 border-b border-[#D9D0C4] bg-[#F2EDE5]/85 backdrop-blur px-4 py-3">
         <button onClick={onBack} className="text-[#8C7B6B] hover:text-[#1C1209] transition text-xl font-bold px-1" title="Go back to Dashboard">
           ←
         </button>
@@ -182,7 +185,7 @@ export default function LessonChat({ lesson, dryRun, onComplete, onBack, onPaywa
       </main>
 
       {/* Input */}
-      <footer className="border-t border-[#D9D0C4] bg-[#F2EDE5] px-4 py-3">
+      <footer className="border-t border-[#D9D0C4] bg-[#F2EDE5]/85 backdrop-blur px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-end gap-2">
           <textarea
             className="min-h-[44px] flex-1 resize-none rounded-xl border border-[#D9D0C4] bg-white px-3 py-2 text-sm text-[#1C1209] placeholder:text-[#8C7B6B] focus:border-[#5B4FCF] focus:outline-none"
@@ -202,6 +205,7 @@ export default function LessonChat({ lesson, dryRun, onComplete, onBack, onPaywa
           </button>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
