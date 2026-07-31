@@ -32,6 +32,7 @@ interface Props {
   onLogout: () => void;
   showLogout: boolean;
   justUnlockedLessonId?: string | null;
+  streakJustIncreased?: boolean;
 }
 
 export default function Dashboard({
@@ -43,6 +44,7 @@ export default function Dashboard({
   onLogout,
   showLogout = true,
   justUnlockedLessonId,
+  streakJustIncreased,
 }: Props) {
   const currentXP = xpInCurrentLevel(progress);
   const percent = Math.min(100, Math.floor((currentXP / 100) * 100));
@@ -71,8 +73,14 @@ export default function Dashboard({
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[#D9D0C4] bg-[#EDE8E0]/80 px-4 py-3 backdrop-blur">
         <h1 className="font-serif text-2xl font-semibold text-[#1C1209] tracking-tight">Anchor</h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-semibold text-[#C8A261]" title="Streak">
-            🔥 {progress.streak}
+          <span
+            className={`flex items-center gap-1 text-sm font-semibold text-[#C8A261] ${streakJustIncreased ? "animate-streak-pulse" : ""}`}
+            title={`Current Reading Streak: ${progress.streak} Days`}
+          >
+            <span role="img" aria-label={`Current Reading Streak: ${progress.streak} Days`}>
+              📖
+            </span>
+            {progress.streak}
           </span>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-[#8C7B6B]">Lv {progress.level}</span>

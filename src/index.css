@@ -26,10 +26,10 @@ h1, h2, h3, .font-serif {
 }
 .animate-xp-fly { animation: xp-fly 1.4s ease-out forwards; }
 
-/* Streak: gentle warm pulse */
+/* Streak: gentle warm pulse + golden glow, triggered when the streak increments */
 @keyframes streak-pulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.1); }
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(200, 162, 97, 0)); }
+  50%      { transform: scale(1.18); filter: drop-shadow(0 0 8px rgba(200, 162, 97, 0.85)); }
 }
 .animate-streak-pulse { animation: streak-pulse 0.9s ease-in-out 2; }
 

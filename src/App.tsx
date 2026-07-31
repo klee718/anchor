@@ -45,6 +45,7 @@ export default function App() {
   const [view, setView] = useState<View>({ screen: "dashboard" });
   const [xpToast, setXpToast] = useState<number | null>(null);
   const [justUnlockedLessonId, setJustUnlockedLessonId] = useState<string | null>(null);
+  const [streakJustIncreased, setStreakJustIncreased] = useState(false);
   const [paywallReason, setPaywallReason] = useState<"locked_unit" | "free_chat_limit" | null>(null);
   const [checkoutStatus, setCheckoutStatus] = useState<"success" | "cancelled" | null>(null);
 
@@ -115,6 +116,10 @@ export default function App() {
   const handleLessonComplete = useCallback(async (xpReward: number, lessonId: string) => {
     try {
       const updated = await completeLessonRemote(lessonId, xpReward);
+      if (progress && updated.streak > progress.streak) {
+        setStreakJustIncreased(true);
+        setTimeout(() => setStreakJustIncreased(false), 1500);
+      }
       setProgress(updated);
       setXpToast(xpReward);
       if (lessonId.startsWith("daily-")) {
@@ -130,7 +135,7 @@ export default function App() {
     } catch (err) {
       console.error("Failed to complete lesson:", err);
     }
-  }, []);
+  }, [progress]);
 
   const handleDailyChallenge = useCallback(() => {
     const dateStr = new Date().toISOString().slice(0, 10);
@@ -228,6 +233,7 @@ export default function App() {
         onPremiumLocked={() => setPaywallReason("locked_unit")}
         onLogout={handleLogout}
         justUnlockedLessonId={justUnlockedLessonId}
+        streakJustIncreased={streakJustIncreased}
         showLogout={true}
       />
       {xpToast !== null && <XPToast amount={xpToast} onDone={() => setXpToast(null)} />}
