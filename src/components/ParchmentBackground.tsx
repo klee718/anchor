@@ -36,6 +36,7 @@ export default function ParchmentBackground() {
 
     let width = 0;
     let height = 0;
+    let vignette: CanvasGradient | null = null;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     function resize() {
@@ -46,6 +47,15 @@ export default function ParchmentBackground() {
       canvas!.style.width = `${width}px`;
       canvas!.style.height = `${height}px`;
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Static edge vignette so drifting motes/glow never compete with text
+      // near the viewport edges — cheap to recompute only on resize.
+      const cx = width / 2;
+      const cy = height / 2;
+      const radius = Math.hypot(cx, cy);
+      vignette = ctx!.createRadialGradient(cx, cy, radius * 0.55, cx, cy, radius);
+      vignette.addColorStop(0, "rgba(28,18,9,0)");
+      vignette.addColorStop(1, "rgba(28,18,9,0.1)");
     }
     resize();
     window.addEventListener("resize", resize);
@@ -106,6 +116,11 @@ export default function ParchmentBackground() {
           ctx!.fill();
         }
         ctx!.restore();
+      }
+
+      if (vignette) {
+        ctx!.fillStyle = vignette;
+        ctx!.fillRect(0, 0, width, height);
       }
     }
 
