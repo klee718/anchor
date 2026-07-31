@@ -86,6 +86,7 @@ export default function LessonChat({ lesson, dryRun, onComplete, onBack, onPaywa
 
   async function sendText(message: string, isSeeded = false) {
     if (!message.trim() || loading) return;
+    playSound("send");
     if (!isSeeded) setInput("");
 
     setMessages((prev) => [...prev, { kind: "user", text: message }]);
@@ -214,10 +215,7 @@ export default function LessonChat({ lesson, dryRun, onComplete, onBack, onPaywa
           <button
             className="rounded-xl bg-[#1C1209] px-4 py-2 text-sm font-bold text-white shadow-[0_3px_0_#0a0704] disabled:opacity-40 transition active:translate-y-0.5 active:shadow-none cursor-pointer"
             disabled={loading || !input.trim()}
-            onClick={() => {
-              playSound("tap");
-              sendText(input);
-            }}
+            onClick={() => sendText(input)}
           >
             Send
           </button>

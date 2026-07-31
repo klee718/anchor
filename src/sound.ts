@@ -1,4 +1,4 @@
-export type SoundKind = "tap" | "unlock" | "chime" | "enter";
+export type SoundKind = "tap" | "unlock" | "chime" | "enter" | "send";
 
 const STORAGE_KEY = "anchor_sound_enabled";
 
@@ -71,6 +71,7 @@ function playPluck(ctx: AudioContext, dest: AudioNode, freq: number, startTime: 
  * - unlock: warm harp-like arpeggio for XP earned / module unlocked
  * - chime: deep chapel-bell toll for daily verse completion
  * - enter: a single soft, distant bell toll when opening a lesson
+ * - send: quick temple-chime dual-tone for every sent chat message
  * No-ops silently if sound is muted or Web Audio is unavailable.
  */
 export function playSound(kind: SoundKind): void {
@@ -94,6 +95,28 @@ export function playSound(kind: SoundKind): void {
     playBell(ctx, master, 392.0, now + 0.15, 2.0, 0.22);
   } else if (kind === "enter") {
     playBell(ctx, master, 220.0, now, 1.8, 0.28);
+  } else if (kind === "send") {
+    // Temple Chime / Sacred Bell: C5 + G5 blend, fundamental bends gently
+    // down for bell-like resonance. Short enough to fire on every message
+    // without feeling repetitive.
+    const fundamental = ctx.createOscillator();
+    const harmonic = ctx.createOscillator();
+    const gain = ctx.createGain();
+    fundamental.type = "sine";
+    harmonic.type = "triangle";
+    fundamental.frequency.setValueAtTime(523.25, now); // C5
+    fundamental.frequency.exponentialRampToValueAtTime(518, now + 0.6);
+    harmonic.frequency.setValueAtTime(783.99, now); // G5
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.22, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+    fundamental.connect(gain);
+    harmonic.connect(gain);
+    gain.connect(master);
+    fundamental.start(now);
+    harmonic.start(now);
+    fundamental.stop(now + 0.7);
+    harmonic.stop(now + 0.7);
   }
 }
 
