@@ -77,9 +77,20 @@ export default function Dashboard({
             className={`flex items-center gap-1 text-sm font-semibold text-[#C8A261] transition-transform hover:scale-105 ${streakJustIncreased ? "animate-streak-pulse" : ""}`}
             title={`Daily Walk Streak: ${progress.streak} Days`}
           >
-            <span role="img" aria-label={`Daily Walk Streak: ${progress.streak} Days`}>
-              📜
-            </span>
+            <svg
+              className="h-[18px] w-[18px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              role="img"
+              aria-label={`Daily Walk Streak: ${progress.streak} Days`}
+            >
+              <path d="M3 20c0-4 6-4 6-8s6-4 6-8" />
+              <circle cx="15" cy="4" r="1.6" fill="currentColor" stroke="none" />
+            </svg>
             {progress.streak}
           </span>
           <div className="flex items-center gap-2">
