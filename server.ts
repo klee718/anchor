@@ -261,7 +261,7 @@ app.get("/api/auth/preview-status", (req, res) => {
   });
 });
 
-app.post("/api/auth/preview-login", (req, res) => {
+app.post("/api/auth/preview-login", async (req, res) => {
   const { email, password } = req.body || {};
   if (typeof email !== "string" || typeof password !== "string") {
     res.status(400).json({ ok: false, error: "Email and password are required." });
@@ -269,6 +269,15 @@ app.post("/api/auth/preview-login", (req, res) => {
   }
 
   if (isWhitelistedUser(email, password)) {
+    // Awaited so the write finishes before the function may be frozen/torn
+    // down after the response is sent, same reasoning as /api/custom-login.
+    // A logging failure must never block login, so its own try/catch swallows errors.
+    try {
+      await recordLogin(email.trim().toLowerCase(), req.ip ?? "unknown");
+    } catch (err) {
+      console.error("Failed to record login event:", err);
+    }
+
     res.setHeader("Set-Cookie", "anchor_preview_auth=true; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000"); // 30 days
     res.json({ ok: true });
   } else {
