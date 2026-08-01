@@ -74,11 +74,11 @@ export default function Dashboard({
         <h1 className="font-serif text-2xl font-semibold text-[#1C1209] tracking-tight">Anchor</h1>
         <div className="flex items-center gap-4">
           <span
-            className={`flex items-center gap-1 text-sm font-semibold text-[#C8A261] ${streakJustIncreased ? "animate-streak-pulse" : ""}`}
-            title={`Current Reading Streak: ${progress.streak} Days`}
+            className={`flex items-center gap-1 text-sm font-semibold text-[#C8A261] transition-transform hover:scale-105 ${streakJustIncreased ? "animate-streak-pulse" : ""}`}
+            title={`Daily Walk Streak: ${progress.streak} Days`}
           >
-            <span role="img" aria-label={`Current Reading Streak: ${progress.streak} Days`}>
-              📖
+            <span role="img" aria-label={`Daily Walk Streak: ${progress.streak} Days`}>
+              📜
             </span>
             {progress.streak}
           </span>
