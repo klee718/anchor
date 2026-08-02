@@ -4,7 +4,7 @@
 // Firestore) — this is the whole point of dry-run mode. State lives only
 // for the life of the dev server process; that's fine, it's a demo aid,
 // not a real persistence layer.
-import { XP_PER_LEVEL, type UserProfile } from "./progress-store.js";
+import { XP_PER_LEVEL, FREE_CHAT_DAILY_LIMIT, type UserProfile } from "./progress-store.js";
 
 const profiles = new Map<string, UserProfile>();
 
@@ -59,8 +59,6 @@ export function dryRunCompleteLesson(uid: string, lessonId: string, xpReward: nu
   profiles.set(uid, updated);
   return updated;
 }
-
-const FREE_CHAT_DAILY_LIMIT = 5;
 
 export function dryRunCheckAndIncrementFreeChat(uid: string): { allowed: boolean; remaining: number } {
   const profile = dryRunGetOrCreateProfile(uid);

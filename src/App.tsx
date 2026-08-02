@@ -36,6 +36,7 @@ type View = { screen: "dashboard" } | { screen: "lesson"; lesson: Lesson } | { s
 
 export default function App() {
   const [dryRun, setDryRun] = useState(false);
+  const [freeChatDailyLimit, setFreeChatDailyLimit] = useState(5);
   const [healthChecked, setHealthChecked] = useState(false);
   const [previewAuthNeeded, setPreviewAuthNeeded] = useState(false);
   const [previewChecked, setPreviewChecked] = useState(false);
@@ -91,7 +92,12 @@ export default function App() {
   useEffect(() => {
     fetch("/api/health")
       .then((r) => r.json())
-      .then((d) => setDryRun(Boolean(d.dryRun)))
+      .then((d) => {
+        setDryRun(Boolean(d.dryRun));
+        if (Number.isInteger(d.freeChatDailyLimit) && d.freeChatDailyLimit > 0) {
+          setFreeChatDailyLimit(d.freeChatDailyLimit);
+        }
+      })
       .catch(() => {})
       .finally(() => setHealthChecked(true));
   }, []);
@@ -234,6 +240,7 @@ export default function App() {
         onLogout={handleLogout}
         justUnlockedLessonId={justUnlockedLessonId}
         streakJustIncreased={streakJustIncreased}
+        freeChatDailyLimit={freeChatDailyLimit}
         showLogout={true}
       />
       {xpToast !== null && <XPToast amount={xpToast} onDone={() => setXpToast(null)} />}

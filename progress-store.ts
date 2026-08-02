@@ -6,6 +6,13 @@ import { getDb } from "./firebase-admin.js";
 
 export const XP_PER_LEVEL = 100;
 
+// Free-tier daily cap on Free Conversation messages. Configurable via env
+// var so it can be tuned (e.g. for engagement experiments) without a code
+// change — falls back to 5 if unset or not a valid positive integer.
+const parsedFreeChatLimit = Number(process.env.FREE_CHAT_DAILY_LIMIT);
+export const FREE_CHAT_DAILY_LIMIT =
+  Number.isInteger(parsedFreeChatLimit) && parsedFreeChatLimit > 0 ? parsedFreeChatLimit : 5;
+
 export interface UserProfile {
   xp: number;
   level: number;
@@ -90,8 +97,6 @@ export async function completeLesson(uid: string, lessonId: string, xpReward: nu
     return updated;
   });
 }
-
-const FREE_CHAT_DAILY_LIMIT = 5;
 
 /**
  * Enforces the free-tier daily free-chat message cap. Premium users always

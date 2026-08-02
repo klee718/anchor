@@ -21,7 +21,7 @@ import { type Translation, lookupReference } from "./verses.js";
 import { runChatTurn, generateLessonOpeningQuestion, isRateLimited, RATE_LIMIT_MESSAGE, type ChatMessage } from "./chat.js";
 import { createDryRunAI } from "./dev-mock.js";
 import { requireAuth, isFirebaseAdminConfigured, type AuthedRequest, signToken } from "./firebase-admin.js";
-import { getOrCreateProfile, completeLesson, checkAndIncrementFreeChat, setPremiumStatus, findUidByStripeCustomerId } from "./progress-store.js";
+import { getOrCreateProfile, completeLesson, checkAndIncrementFreeChat, setPremiumStatus, findUidByStripeCustomerId, FREE_CHAT_DAILY_LIMIT } from "./progress-store.js";
 import { createCheckoutSession, constructWebhookEvent, interpretWebhookEvent, isStripeConfigured } from "./stripe-admin.js";
 import { dryRunGetOrCreateProfile, dryRunCompleteLesson, dryRunCheckAndIncrementFreeChat } from "./dry-run-store.js";
 import { recordLogin, getRecentLogins } from "./login-store.js";
@@ -299,6 +299,7 @@ app.get("/api/health", (_req, res) => {
     authConfigured: isFirebaseAdminConfigured,
     stripeConfigured: isStripeConfigured,
     vercelHosting: isVercelHosting(),
+    freeChatDailyLimit: FREE_CHAT_DAILY_LIMIT,
   });
 });
 

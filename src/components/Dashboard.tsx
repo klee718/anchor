@@ -33,6 +33,7 @@ interface Props {
   showLogout: boolean;
   justUnlockedLessonId?: string | null;
   streakJustIncreased?: boolean;
+  freeChatDailyLimit?: number;
 }
 
 export default function Dashboard({
@@ -45,6 +46,7 @@ export default function Dashboard({
   showLogout = true,
   justUnlockedLessonId,
   streakJustIncreased,
+  freeChatDailyLimit = 5,
 }: Props) {
   const currentXP = xpInCurrentLevel(progress);
   const percent = Math.min(100, Math.floor((currentXP / 100) * 100));
@@ -157,7 +159,9 @@ export default function Dashboard({
                 <div>
                   <p className="font-semibold text-[#1C1209]">Free Conversation</p>
                   <p className="text-xs text-[#8C7B6B]">
-                    {progress.isPremium ? "Ask anything — unlimited" : "Ask anything — 5 messages/day on the free tier"}
+                    {progress.isPremium
+                      ? "Ask anything — unlimited"
+                      : `Ask anything — ${freeChatDailyLimit} messages/day on the free tier`}
                   </p>
                 </div>
               </div>
