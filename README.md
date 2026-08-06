@@ -270,3 +270,9 @@ The Admin SDK's service account credentials (`FIREBASE_SERVICE_ACCOUNT_JSON`) ar
 ## ⚠️ Disclaimer
 
 Anchor is not a licensed counseling service, pastoral service, or medical resource. It is an AI-powered study companion. In any situation involving distress or crisis, users are directed to the **988 Suicide & Crisis Lifeline** (call or text 988) and the **Crisis Text Line** (text HOME to 741741).
+
+---
+
+## Acknowledgments & Attribution
+
+Anchor was founded by **Kevin Lee** and **Jake Lee**. For full founding history, governance structure, and contribution guidelines, see [CONTRIBUTORS.md](./CONTRIBUTORS.md).
